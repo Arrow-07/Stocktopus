@@ -1,0 +1,40 @@
+# Ambiente virtuale Python
+venv/
+env/
+.venv/
+
+# File Python compilati
+__pycache__/
+*.py[cod]
+*$py.class
+
+# File di configurazione locali
+.env
+.env.*
+
+# Database locali
+*.db
+*.sqlite
+*.sqlite3
+
+# Log
+*.log
+
+# File temporanei
+*.tmp
+*.bak
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Test e coverage
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
