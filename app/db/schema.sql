@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS locations (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 id_genitore INTEGER,
 nome TEXT NOT NULL,
+descrizione TEXT,
 tipo TEXT NOT NULL,
 
 FOREIGN KEY (id_genitore) REFERENCES locations(id)
