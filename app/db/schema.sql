@@ -11,6 +11,7 @@ FOREIGN KEY (id_genitore) REFERENCES locations(id)
 CREATE TABLE IF NOT EXISTS categorie (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 id_genitore INTEGER,
+descrizione TEXT,
 nome TEXT NOT NULL,
 colore TEXT,
 
