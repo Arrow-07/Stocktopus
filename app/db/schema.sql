@@ -13,6 +13,7 @@ id INTEGER PRIMARY KEY AUTOINCREMENT,
 id_genitore INTEGER,
 descrizione TEXT,
 nome TEXT NOT NULL,
+codice TEXT UNIQUE,
 colore TEXT,
 
 FOREIGN KEY (id_genitore) REFERENCES categorie(id)
@@ -30,6 +31,7 @@ unita_misura TEXT NOT NULL DEFAULT 'pz',
 data_acquisto DATE,
 note TEXT,
 immagine_path TEXT,
+archiviato_il DATETIME,
 
 FOREIGN KEY (id_categoria) REFERENCES categorie(id),
 FOREIGN KEY (id_location) REFERENCES locations(id)

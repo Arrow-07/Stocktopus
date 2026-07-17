@@ -1,6 +1,27 @@
 from app.db.initdb import ConnectDB
+import re
 
-def crea_categoria(nome: str, descrizione: str | None = None, id_genitore: int | None = None, colore: str | None = None) -> int:
+def _valida_codice_categoria(connDB, codice: str | None, escludi_id: int | None = None) -> None:
+    """Solleva un'eccezione se il codice non rispetta il formato o è già usato.
+    escludi_id serve per aggiorna_categoria, per non confrontare una categoria con se stessa."""
+    if codice is None:
+        return  # campo opzionale, va bene anche vuoto
+
+    if not re.fullmatch(r"[A-Z]{2,5}", codice):
+        raise ValueError(
+            f"Codice '{codice}' non valido: deve essere 2-5 lettere maiuscole (es. ELE, RES)."
+        )
+
+    query = "SELECT id FROM categorie WHERE codice = ?"
+    params = [codice]
+    if escludi_id is not None:
+        query += " AND id != ?"
+        params.append(escludi_id)
+
+    if connDB.execute(query, params).fetchone():
+        raise ValueError(f"Il codice '{codice}' è già usato da un'altra categoria.")
+
+def crea_categoria(nome: str, descrizione: str | None = None, id_genitore: int | None = None, colore: str | None = None, codice: str | None = None) -> int:
     """
     Crea una nuova categoria nel database.
 
@@ -9,15 +30,20 @@ def crea_categoria(nome: str, descrizione: str | None = None, id_genitore: int |
         descrizione (str | None): La descrizione della categoria. Default è None.
         id_genitore (int | None): L'ID della categoria genitore. Default è None.
         colore (str | None): Il colore associato alla categoria. Default è None.
+        codice (str | None): Il codice associato alla categoria. Default è None.
 
     Returns:
         int: L'ID della nuova categoria creata.
     """
     connDB = ConnectDB()
     try:
+        if codice is not None:
+            codice = codice.strip().upper()
+            _valida_codice_categoria(connDB, codice)
+
         Query = connDB.execute(
-            "INSERT INTO categorie (nome, descrizione, id_genitore, colore) VALUES (?,?,?,?)",
-            (nome, descrizione, id_genitore, colore)
+            "INSERT INTO categorie (nome, descrizione, id_genitore, colore, codice) VALUES (?,?,?,?,?)",
+            (nome, descrizione, id_genitore, colore, codice)
         )
         connDB.commit()
         id_appena_creato = Query.lastrowid
@@ -73,7 +99,7 @@ def leggi_categorie_figlie(categoria_id: int | None) -> list[dict]:
         connDB.close()
 
 UNSET = object()
-def aggiorna_categoria(categoria_id: int, nome: str | None = None, descrizione: str | None | object = UNSET, colore: str | None | object = UNSET) -> bool:
+def aggiorna_categoria(categoria_id: int, nome: str | None = None, descrizione: str | None | object = UNSET, colore: str | None | object = UNSET, codice: str | None | object = UNSET) -> bool:
     """
     Aggiorna i dettagli di una categoria nel database.
 
@@ -82,6 +108,7 @@ def aggiorna_categoria(categoria_id: int, nome: str | None = None, descrizione: 
         nome (str | None): Il nuovo nome della categoria. Default è None.
         descrizione (str | None): La nuova descrizione della categoria. Default è None.
         colore (str | None): Il nuovo colore associato alla categoria. Default è None.
+        codice (str | None): Il nuovo codice associato alla categoria. Default è None.
 
     Returns:
         bool: True se l'aggiornamento è avvenuto con successo, False altrimenti.
@@ -101,7 +128,14 @@ def aggiorna_categoria(categoria_id: int, nome: str | None = None, descrizione: 
         if colore is not UNSET:
             campi_da_aggiornare.append("colore = ?")
             valori.append(colore)
-
+        if codice is not UNSET:
+            if codice is not None:
+                codice = codice.strip().upper()
+                _valida_codice_categoria(connDB, codice, escludi_id=categoria_id)
+            
+            campi_da_aggiornare.append("codice = ?")
+            valori.append(codice)
+        
         if not campi_da_aggiornare:
             return False  # Nessun campo da aggiornare
 

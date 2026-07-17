@@ -1,7 +1,5 @@
 import sqlite3
 import pytest
-from app.db import initdb
-# Assumi che il tuo script si chiami categoria_repo.py dentro app/db/
 from app.db import categoria_repo 
 
 
@@ -29,7 +27,7 @@ def conn(monkeypatch, tmp_path):
         return connection
 
     # Applica la patch direttamente sul punto di origine dell'import
-    monkeypatch.setattr(initdb, "ConnectDB", connect_mock)
+    monkeypatch.setattr(categoria_repo, "ConnectDB", connect_mock)
     
     # Fornisce una connessione al test per gli assert e gli inserimenti manuali
     test_connection = connect_mock()
@@ -154,16 +152,22 @@ def test_elimina_categoria_con_figli_senza_azione_solleva_errore(conn):
 
 def test_elimina_categoria_con_oggetti_collegati_solleva_errore(conn):
     # Arrange
-    # 1. Creiamo la categoria
     id_cat = categoria_repo.crea_categoria("Utensili")
-    
-    # 2. Creiamo la location inserendo tutti i campi minimi richiesti
+    print(f"\nDEBUG id_cat = {id_cat}")
+
     cursor_loc = conn.execute(
         "INSERT INTO locations (nome, tipo) VALUES ('Cassetta Attrezzi', 'contenitore')"
     )
     id_loc = cursor_loc.lastrowid
-    
-    # 3. Inseriamo l'oggetto usando un'abbreviazione univoca specifica per questo test
+    conn.commit()
+    print(f"DEBUG id_loc = {id_loc}")
+
+    # Verifica diretta: queste righe esistono DAVVERO secondo questa connessione?
+    riga_cat = conn.execute("SELECT * FROM categorie WHERE id = ?", (id_cat,)).fetchone()
+    riga_loc = conn.execute("SELECT * FROM locations WHERE id = ?", (id_loc,)).fetchone()
+    print(f"DEBUG riga_cat trovata: {riga_cat is not None}")
+    print(f"DEBUG riga_loc trovata: {riga_loc is not None}")
+
     conn.execute(
         "INSERT INTO oggetto (nome, id_categoria, id_location, abbreviazione, quantita, unita_misura) "
         "VALUES ('Martello da carpentiere', ?, ?, 'UNIQUE-ABBR-CAT-TEST-001', 5, 'pz')",
@@ -171,7 +175,5 @@ def test_elimina_categoria_con_oggetti_collegati_solleva_errore(conn):
     )
     conn.commit()
 
-    # Act & Assert
     with pytest.raises(Exception, match="contiene oggetti e non può essere eliminata"):
         categoria_repo.elimina_categorie(id_cat, azione_figli="elimina")
-
