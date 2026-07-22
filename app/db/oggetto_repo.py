@@ -45,7 +45,8 @@ def genera_abbreviazione(connDB, id_categoria: int | None, dettagli: str | None 
     return _abbreviazione_univoca(connDB, base)
 
 def crea_oggetto(
-        nome: str, quantita: int = 0 , 
+        nome: str, 
+        quantita: int = 0 , 
         unita_di_misura: str = 'pz', 
         id_categoria: int | None = None, 
         id_location: int | None = None,
@@ -75,9 +76,9 @@ def crea_oggetto(
 
     # LOGICA PER CREARE ABBREVIAZIONE UNICA
     connDB = ConnectDB()
-    abbreviazione = genera_abbreviazione(connDB, id_categoria, dettagli)
     
     try:
+        abbreviazione = genera_abbreviazione(connDB, id_categoria, dettagli)
         Query = connDB.execute(
             "INSERT INTO oggetto (nome, quantita, abbreviazione, unita_misura, id_categoria, id_location, descrizione, data_acquisto, note, immagine_path) VALUES (?,?,?,?,?,?,?,?,?,?)",
             (nome, quantita, abbreviazione, unita_di_misura, id_categoria, id_location, descrizione, data_acquisto, note, immagine_path)
@@ -138,7 +139,7 @@ def leggi_oggetti_per_categoria(categoria_id: int | None, include_archiviati: bo
     finally:
         connDB.close()
 
-def leggi_oggetti_per_location(location_id: str | None, include_archiviati: bool = False) -> list[dict]:
+def leggi_oggetti_per_location(location_id: int | None, include_archiviati: bool = False) -> list[dict]:
     """
     Legge tutti gli oggetti appartenenti a una location specifica.
 
@@ -164,21 +165,30 @@ def leggi_oggetti_per_location(location_id: str | None, include_archiviati: bool
         connDB.close()
 
 UNSET = object()
-def aggiorna_oggetto(oggetto_id: int, nome: str | None = None, quantita: int | None = None, unita_di_misura: str | None = None, id_categoria: int | None = None, id_location: int | None = None, descrizione: str | object | None = UNSET, data_acquisto: str | object | None = UNSET, note: str | object | None = UNSET, immagine_path: str | object | None = UNSET) -> bool:
+def aggiorna_oggetto(oggetto_id: int, 
+                     nome: str | object = UNSET, 
+                     quantita: int | object = UNSET, 
+                     unita_di_misura: str | object = UNSET, 
+                     id_categoria: int | None | object = UNSET, 
+                     id_location: int | None | object = UNSET, 
+                     descrizione: str | object | None = UNSET, 
+                     data_acquisto: str | object | None = UNSET, 
+                     note: str | object | None = UNSET, 
+                     immagine_path: str | object | None = UNSET) -> bool:
     """
     Aggiorna i dettagli di un oggetto nel database.
-
+    
     Args:
         oggetto_id (int): L'ID dell'oggetto da aggiornare.
-        nome (str | None): Il nuovo nome dell'oggetto. Default è None.
-        quantita (int | None): La nuova quantità dell'oggetto. Default è None.
-        unita_di_misura (str | None): La nuova unità di misura dell'oggetto. Default è None.
-        id_categoria (int | None): Il nuovo ID della categoria a cui appartiene l'oggetto. Default è None.
-        id_location (int | None): Il nuovo ID della location in cui si trova l'oggetto. Default è None.
-        descrizione (str | None): La nuova descrizione dell'oggetto. Default è None.
-        data_acquisto (str | None): La nuova data di acquisto dell'oggetto. Default è None.
-        note (str | None): Nuove note aggiuntive sull'oggetto. Default è None.
-        immagine_path (str | None): Il nuovo percorso dell'immagine associata all'oggetto. Default è None.
+        nome (str | UNSET): Il nuovo nome dell'oggetto. Default è UNSET.
+        quantita (int | UNSET): La nuova quantità dell'oggetto. Default è UNSET.
+        unita_di_misura (str | UNSET): La nuova unità di misura dell'oggetto. Default è UNSET.
+        id_categoria (int | None | UNSET): Il nuovo ID della categoria a cui appartiene l'oggetto. Default è UNSET.
+        id_location (int | None | UNSET): Il nuovo ID della location in cui si trova l'oggetto. Default è UNSET.
+        descrizione (str | None | UNSET): La nuova descrizione dell'oggetto. Default è UNSET.
+        data_acquisto (str | None | UNSET): La nuova data di acquisto dell'oggetto. Default è UNSET.
+        note (str | None): Nuove note aggiuntive sull'oggetto. Default è UNSET.
+        immagine_path (str | None | UNSET): Il nuovo percorso dell'immagine associata all'oggetto. Default è UNSET.
 
     Returns:
         bool: True se l'aggiornamento ha avuto successo, False altrimenti.
@@ -221,9 +231,9 @@ def aggiorna_oggetto(oggetto_id: int, nome: str | None = None, quantita: int | N
         
         valori.append(oggetto_id)
         query = f"UPDATE oggetto SET {', '.join(campi_da_aggiornare)} WHERE id = ?"
-        connDB.execute(query, valori)
+        cur = connDB.execute(query, tuple(valori))
         connDB.commit()
-        return True
+        return cur.rowcount > 0
     finally:
         connDB.close()
 
@@ -231,7 +241,7 @@ def oggetto_ha_movimenti(oggetto_id: int) -> bool:
     """
     Controlla se un oggetto ha movimenti associati nel database.
 
-    Args:
+    Args: 
         oggetto_id (int): L'ID dell'oggetto da controllare.
 
     Returns:

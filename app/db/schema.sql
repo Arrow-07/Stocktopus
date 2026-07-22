@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS movimenti (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 id_oggetto INTEGER,
 id_location INTEGER,
+id_location_destinazione INTEGER,
 id_utente INTEGER,
 data_movimento DATETIME NOT NULL,
 quantita INTEGER NOT NULL,
@@ -68,6 +69,7 @@ note TEXT,
 
 FOREIGN KEY (id_oggetto) REFERENCES oggetto(id),
 FOREIGN KEY (id_location) REFERENCES locations(id),
+FOREIGN KEY (id_location_destinazione) REFERENCES locations(id),
 FOREIGN KEY (id_utente) REFERENCES utenti(id)
 );
 
