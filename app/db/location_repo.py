@@ -1,4 +1,9 @@
 from app.db.initdb import ConnectDB
+import re
+
+def prefisso(tipo: str) -> str:
+    pulito = re.sub(r"[^A-Za-z]", "", tipo)
+    return pulito.upper()[:3] or "XXX"
 
 def crea_location(nome: str,  tipo: str, descrizione: str | None = None , id_genitore: int | None = None) -> int:
     """
@@ -22,6 +27,11 @@ def crea_location(nome: str,  tipo: str, descrizione: str | None = None , id_gen
         )
         connDB.commit()
         id_appena_creato = Query.lastrowid
+        #ABBREVIAZIONE PER CODICE
+        abbreviazione = f"{prefisso(tipo)}_{id_appena_creato}"
+        connDB.execute("UPDATE locations SET abbreviazione = ? WHERE id = ?", (abbreviazione, id_appena_creato))
+
+        connDB.commit()
         return id_appena_creato
     finally:
         connDB.close()

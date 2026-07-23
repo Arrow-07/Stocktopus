@@ -4,7 +4,7 @@ id_genitore INTEGER,
 nome TEXT NOT NULL,
 descrizione TEXT,
 tipo TEXT NOT NULL,
-
+abbreviazione TEXT UNIQUE,
 FOREIGN KEY (id_genitore) REFERENCES locations(id)
 );
 
@@ -40,12 +40,25 @@ FOREIGN KEY (id_location) REFERENCES locations(id)
 CREATE TABLE IF NOT EXISTS codice (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 id_oggetto INTEGER,
+id_location INTEGER,
 tipo_codice TEXT NOT NULL,
 codice TEXT NOT NULL UNIQUE,
 immagine_path TEXT,
 
-FOREIGN KEY (id_oggetto) REFERENCES oggetto(id)
+FOREIGN KEY (id_oggetto) REFERENCES oggetto(id),
+FOREIGN KEY (id_location) REFERENCES locations(id),
+CHECK (
+    (id_oggetto IS NOT NULL AND id_location IS NULL)
+    OR
+    (id_oggetto IS NULL AND id_location IS NOT NULL)
+)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_codice_oggetto_unico
+    ON codice(id_oggetto) WHERE id_oggetto IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_codice_location_unico
+    ON codice(id_location) WHERE id_location IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS utenti (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
