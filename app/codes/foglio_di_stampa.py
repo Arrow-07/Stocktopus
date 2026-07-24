@@ -7,7 +7,7 @@ CARTELLA_FOGLI = Path(__file__).parent.parent.parent / "data" / "printable_sheet
 DPI = 300
 LARGHEZZA_A4 = int(8.27 * DPI)   # ~2481 px
 ALTEZZA_A4 = int(11.69 * DPI)    # ~3508 px
-MARGINE = int(0.4 * DPI)         # margine esterno del foglio
+MARGINE = int(0.25 * DPI)         # margine esterno del foglio
 
 
 def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4) -> list[Path]:

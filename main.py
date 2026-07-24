@@ -1,14 +1,13 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication
+from app.db.initdb import InitDB
+from app.gui.finestra_princ import FinestraPrincipale
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("STOCKTOPUS")
-        self.setGeometry(100, 100, 800, 600)
 
 if __name__ == "__main__":
+    InitDB()
+
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = FinestraPrincipale()
     window.show()
     sys.exit(app.exec())
