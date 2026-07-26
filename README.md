@@ -3,7 +3,7 @@
 </center>
 
 # 🐙 Stocktopus
-> A modern, open-source desktop inventory management application.
+A modern, open-source desktop inventory management application.
 
 <p align="center">
 
@@ -23,17 +23,15 @@ Stocktopus is an open-source desktop application designed to make inventory mana
 
 It allows users to organize items into hierarchical locations, categorize them, keep track of movements, and maintain a structured database of their inventory.
 
-The project focuses on performance, usability and scalability while remaining lightweight thanks to SQLite.
+Built with Python and Qt, Stocktopus is designed to be lightweight, fast and fully offline while remaining scalable for inventories of any size.
 
 ---
 
 ## Why Stocktopus?
 
-Many inventory management solutions are either too complex, too expensive, or tied to cloud services.
+Many inventory management solutions are either too complex, cloud-dependent or filled with features that most users never need.
 
-Stocktopus aims to provide a lightweight, offline-first and open-source alternative that combines an intuitive interface with powerful organization features.
-
-Whether you're managing personal equipment, workshop tools, school laboratories or small business inventories, Stocktopus is designed to keep everything organized without unnecessary complexity.
+Stocktopus was created to provide a clean, intuitive and fully offline alternative that helps individuals, makers, schools and small businesses keep track of their equipment without unnecessary complexity.
 
 ---
 
@@ -54,11 +52,11 @@ Whether you're managing personal equipment, workshop tools, school laboratories 
 
 ## Technology Stack
 
-- Python
-- PySide6 (Qt)
-- SQLite
-- Git
-- GitHub
+- 🐍 Python
+- 🖥️ PySide6 (Qt)
+- 🗄️ SQLite
+- 🌱 Git
+- 🐙 GitHub
 
 ---
 
@@ -68,12 +66,12 @@ Stocktopus stores all data using SQLite.
 
 Current database entities include:
 
-- Locations
-- Categories
-- Items
-- Item Codes
-- Movement History
-- Users
+- 📂 Locations
+- 📦 Items
+- 🏷️ Categories
+- 🔢 Item Codes
+- 📜 Movement History
+- 👤 Users
 
 ---
 
@@ -97,13 +95,13 @@ Current progress: **Phase 3 – Graphical User Interface** 🚧
 
 This project is licensed under the **MIT License**.
 
-See the LICENSE file for more information.
+See the [LICENSE](LICENSE) file for more information.
 
 ---
 
 ## Author
-**Giacomo Rossi**
+Developed by **Giacomo Rossi**
 
-GitHub: https://github.com/Arrow-07
+GitHub → https://github.com/Arrow-07
 
-If you like this project, consider giving it a ⭐.
+⭐ If you find this project useful, consider starring the repository!
