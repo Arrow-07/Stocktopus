@@ -1,6 +1,5 @@
-<center>
-<img width="300" height="300" alt="stocktopus-LOGO" src="https://github.com/user-attachments/assets/40b8bd7d-358f-44a5-8d5f-544db17d4176" />
-</center>
+<img width="1600" height="500" alt="BANNER" src="https://github.com/user-attachments/assets/a4aedc91-8136-404d-b0ec-df0e04c5e34c" />
+
 
 # 🐙 Stocktopus
 A modern, open-source desktop inventory management application.
