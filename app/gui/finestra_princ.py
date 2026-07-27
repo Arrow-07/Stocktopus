@@ -1,16 +1,23 @@
 from PySide6.QtWidgets import (
-QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea
+QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox
 )
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap
+
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
 from PySide6.QtCore import Qt
 from pathlib import Path
 from app.db import location_repo, oggetto_repo, movimenti_repo, categoria_repo, codice_repo
+from app.gui.form_location import FormLocation
+from app.gui.form_oggetto import FormOggetto
+
+
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Stocktopus")
         self.resize(1100,700)
+
+        self._crea_toolbar()
 
         splitter = QSplitter(Qt.Horizontal)
 
@@ -19,14 +26,47 @@ class FinestraPrincipale(QMainWindow):
         self.albero_location = self._crea_albero_locations()
         splitter.addWidget(self.albero_location)
 
-        self.tabella_oggetti = self._crea_tabella_oggetti()
-        splitter.addWidget(self.tabella_oggetti)
+        splitter.addWidget(self._crea_pannello_centrale())
 
         self.pannello_dettaglio = self._crea_pannello_dettaglio()
         splitter.addWidget(self.pannello_dettaglio)
 
         splitter.setSizes([250, 550, 300])
         self.setCentralWidget(splitter)
+
+    def _crea_toolbar(self):
+        toolbar = self.addToolBar("Action")
+        toolbar.addAction("+ New location", self._apri_form_nuova_location)
+        toolbar.addAction("+ New object", self._apri_form_nuovo_oggetto)
+    
+    def _apri_form_nuova_location(self):
+        id_genitore = self._id_location_albero_selezionata()
+        form = FormLocation(self, id_genitore)
+        if form.exec():
+            self._ricarica_albero_location()
+
+    def _apri_form_nuovo_oggetto(self):
+        id_location = getattr(self, "id_location_corrente", None)
+        form = FormOggetto(self, id_location)
+        if form.exec():
+            if hasattr(self, "id_location_corrente"):
+                self._aggiorna_tabella_oggetti(self.id_location_corrente)
+
+    def _id_location_albero_selezionata(self) -> int | None:
+        indici = self.albero_location.selectedIndexes()
+        if not indici:
+            return None
+        item = self.modello_location.itemFromIndex(indici[0])
+        return item.data(Qt.UserRole)
+
+    def _ricarica_albero_location(self):
+        """
+        Ricostruisce l'albero da zero (torna tutto collassato) - semplice ma efficace , evita di dover tracciare quali nodi erano espansi prima.
+        """
+        self.modello_location.clear()
+        self._popola_nodo_radice(self.modello_location)
+        self.albero_location.resizeColumnToContents(0)
+
 
     def _crea_albero_locations(self) -> QTreeView:
         albero = QTreeView()
@@ -38,6 +78,8 @@ class FinestraPrincipale(QMainWindow):
 
         albero.clicked.connect(self._on_location_selezionata)
         albero.expanded.connect(self._on_location_espansa)
+
+        albero.resizeColumnToContents(0)
         return albero
 
     def _popola_nodo_radice(self, modello: QStandardItemModel):
@@ -85,6 +127,26 @@ class FinestraPrincipale(QMainWindow):
             item.removeRow(0)
             for figlio in location_repo.leggi_locations_figlie(id_location):
                 item.appendRow(self._crea_item_location(figlio))
+            self.albero_location.resizeColumnToContents(0)
+
+    def _crea_pannello_centrale(self)  -> QWidget:
+        contenitore = QWidget()
+        layout = QVBoxLayout(contenitore)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.checkbox_mostra_archiviati = QCheckBox("Show Archivied Object")
+        self.checkbox_mostra_archiviati.stateChanged.connect(self._on_toggle_archiviati)
+        layout.addWidget(self.checkbox_mostra_archiviati)
+
+        self.tabella_oggetti = self._crea_tabella_oggetti()
+        layout.addWidget(self.tabella_oggetti)
+
+        return(contenitore)
+
+    def _on_toggle_archiviati(self):
+        """Ricarica la tabella con/senza archiviati quando l'utente attiva/disattiva il checkbox."""
+        if hasattr(self, "id_location_corrente"):
+            self._aggiorna_tabella_oggetti(self.id_location_corrente)
 
     def _crea_tabella_oggetti(self) -> QTableView:
         tabella = QTableView()
@@ -102,11 +164,18 @@ class FinestraPrincipale(QMainWindow):
         return tabella
 
     def _aggiorna_tabella_oggetti(self, id_location: int):
+        self.id_location_corrente = id_location
         self.modello_oggetti.setRowCount(0) # svuoto poi riempo
-        oggetti = oggetto_repo.leggi_oggetti_per_location(id_location)
+
+        includi_archiviati = self.checkbox_mostra_archiviati.isChecked()
+        oggetti = oggetto_repo.leggi_oggetti_per_location(id_location, includi_archiviati)
+
         for oggetto in oggetti:
             item_nome=QStandardItem(oggetto["nome"])
             item_nome.setData(oggetto["id"], Qt.UserRole)
+            if oggetto["archiviato_il"] is not None:
+                item_nome.setText(f"🗑 {oggetto['nome']}")
+                item_nome.setForeground(QColor("orange"))
             riga = [
                 item_nome,
                 QStandardItem(str(oggetto["quantita"]) + " ["  + oggetto["unita_misura"] + "]"),
@@ -115,6 +184,8 @@ class FinestraPrincipale(QMainWindow):
             for cella in riga:
                 cella.setEditable(False)
             self.modello_oggetti.appendRow(riga)
+
+        self.tabella_oggetti.resizeColumnsToContents()
 
     def _crea_pannello_dettaglio(self) -> QWidget:
         contenuto = QWidget()
@@ -199,13 +270,19 @@ class FinestraPrincipale(QMainWindow):
     def _aggiorna_pannello_dettaglio(self):
         """Rilegge l'oggetto dal database (non dalla tabella) per avere sempre
         la quantità aggiornata, anche subito dopo un prelievo/deposito.""" 
-        oggetto = oggetto_repo.leggi_oggetto(self.id_oggetto_selezionato)
+        oggetto = oggetto_repo.leggi_oggetto(self.id_oggetto_selezionato, include_archiviati=True)
         if oggetto is None:
             return
 
         self.label_nessuna_selezione.setVisible(False)
 
         self.label_nome.setText(oggetto["nome"])
+
+        if oggetto["archiviato_il"] is not None:
+            self.label_nome.setStyleSheet("font-weight: bold; font-size: 14px; color: orange;")
+        else:
+            self.label_nome.setStyleSheet("font-weight: bold; font-size: 14px;")
+
         self.label_id.setText(f"ID: #{oggetto['id']}")
         self.label_abbreviazione.setText(f"Code: {oggetto['abbreviazione']}")
         self.label_quantita.setText(f"Amount: {oggetto['quantita']} [{oggetto['unita_misura']}]")
@@ -230,13 +307,13 @@ class FinestraPrincipale(QMainWindow):
 
         #location
         if oggetto["id_location"] is not None:
-            location = location_repo.leggi_location(oggetto["id_categoria"])
+            location = location_repo.leggi_location(oggetto["id_location"])
             if location:
                 self.label_location.setText(f"Location: {location['nome']}")
             else:
-                self.label_categoria.setText("Location: (Deleted)")
+                self.label_location.setText("Location: (Deleted)")
         else:
-            self.label_categoria.setText("Location: Not available")
+            self.label_location.setText("Location: Not available")
 
         #immagine
         self.label_immagine.clear()
@@ -274,7 +351,7 @@ class FinestraPrincipale(QMainWindow):
             QMessageBox.warning(self, "Unable to Retrieve Item", str(errore))
             return
 
-        self._aggiorna_pannello_dettaglio
+        self._aggiorna_pannello_dettaglio()
         self._ricarica_tabella_corrente()
 
     def _on_deposita_cliccato(self):
@@ -285,7 +362,7 @@ class FinestraPrincipale(QMainWindow):
             QMessageBox.warning(self, "Unable to Store Item", str(errore))
             return
     
-        self._aggiorna_pannello_dettaglio
+        self._aggiorna_pannello_dettaglio()
         self._ricarica_tabella_corrente()
 
     def _ricarica_tabella_corrente(self):
