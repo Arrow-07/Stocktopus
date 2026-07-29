@@ -8,7 +8,7 @@ from pathlib import Path
 from app.db import location_repo, oggetto_repo, movimenti_repo, categoria_repo, codice_repo
 from app.gui.form_location import FormLocation
 from app.gui.form_oggetto import FormOggetto
-
+from app.gui.form_categoria import FormCategoria
 
 
 class FinestraPrincipale(QMainWindow):
@@ -37,6 +37,7 @@ class FinestraPrincipale(QMainWindow):
     def _crea_toolbar(self):
         toolbar = self.addToolBar("Action")
         toolbar.addAction("+ New location", self._apri_form_nuova_location)
+        toolbar.addAction("+ New category", self._apri_form_categoria)
         toolbar.addAction("+ New object", self._apri_form_nuovo_oggetto)
     
     def _apri_form_nuova_location(self):
@@ -44,6 +45,10 @@ class FinestraPrincipale(QMainWindow):
         form = FormLocation(self, id_genitore)
         if form.exec():
             self._ricarica_albero_location()
+
+    def _apri_form_categoria(self):
+        form = FormCategoria(self)
+        form.exec()
 
     def _apri_form_nuovo_oggetto(self):
         id_location = getattr(self, "id_location_corrente", None)
