@@ -163,7 +163,7 @@ def _elimina_codici_di_locations(connDB, ids_location: list[int]) -> None:
         return
     placeholders= ",".join("?"  * len(ids_location))
     righe = connDB.execute(
-        f"SELECT id, image_path FROM codice WHERE id_location IN ({placeholders})",
+        f"SELECT id, immagine_path FROM codice WHERE id_location IN ({placeholders})",
         ids_location
     ).fetchall()
 
@@ -173,7 +173,6 @@ def _elimina_codici_di_locations(connDB, ids_location: list[int]) -> None:
             percorso = Path(riga["immagine_path"])
             if percorso.exists():
                 percorso.unlink()
-
 
 def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
     """
@@ -205,7 +204,7 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
 
         if azione_figli == "elimina":
             # cancella dal più profondo al più superficiale, altrimenti la FK blocca
-            _elimina_codici_di_locations(connDB, discendenti)
+            _elimina_codici_di_locations(connDB, [location_id])
             for id_discendente in reversed(discendenti):
                 _nullifica_movimenti_location(connDB, id_discendente)
                 connDB.execute("DELETE FROM locations WHERE id = ?", (id_discendente,))
@@ -231,6 +230,32 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
     except Exception:
         connDB.rollback()
         raise
+    finally:
+        connDB.close()
+
+def leggi_location_per_abbreviazione(abbreviazione: str) -> dict | None:
+    connDB = ConnectDB()
+    try:
+        riga = connDB.execute(
+            "SELECT * FROM locations WHERE abbreviazione = ?", (abbreviazione,)
+        ).fetchone()
+        return dict(riga) if riga else None
+    finally:
+        connDB.close()
+
+def cerca_locations(testo: str) -> list[dict]:
+    """
+    Cerca location il cui nome o tipo contengono il testo dato
+    (case-insensitive, ricerca parziale).
+    """
+    connDB = ConnectDB()
+    try:
+        pattern = f"%{testo}%"
+        righe = connDB.execute(
+            "SELECT * FROM locations WHERE nome LIKE ? COLLATE NOCASE OR tipo LIKE ? COLLATE NOCASE",
+            (pattern, pattern)
+        ).fetchall()
+        return [dict(r) for r in righe]
     finally:
         connDB.close()
     

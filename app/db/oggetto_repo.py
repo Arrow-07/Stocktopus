@@ -20,7 +20,6 @@ def _percorso_codici_categoria(connDB, categoria_id: int) -> list[str]:
     percorso.reverse()  # ora va dalla radice verso il livello specifico
     return percorso
 
-
 def _abbreviazione_univoca(connDB, base: str) -> str:
     """Se 'base' esiste già come abbreviazione, aggiunge un contatore finché non è univoca."""
     candidato = base
@@ -31,7 +30,6 @@ def _abbreviazione_univoca(connDB, base: str) -> str:
         candidato = f"{base}_{contatore}"
         contatore += 1
     return candidato
-
 
 def genera_abbreviazione(connDB, id_categoria: int | None, dettagli: str | None = None) -> str:
     """Costruisce un'abbreviazione semantica tipo ELE_RES_SMD_100:
@@ -277,7 +275,6 @@ def elimina_oggetto(oggetto_id: int, limite_cestino: int = 50) -> bool:
         _svuota_cestino_se_pieno(limite_cestino)
     return spostato
 
-
 def ripristina_oggetto(oggetto_id: int) -> bool:
     """Toglie l'oggetto dal cestino, se non è già stato cancellato definitivamente."""
     connDB = ConnectDB()
@@ -290,7 +287,6 @@ def ripristina_oggetto(oggetto_id: int) -> bool:
         return cur.rowcount > 0
     finally:
         connDB.close()
-
 
 def _svuota_cestino_se_pieno(limite: int) -> None:
     """Se gli oggetti archiviati superano 'limite', cancella DEFINITIVAMENTE
@@ -310,7 +306,7 @@ def _svuota_cestino_se_pieno(limite: int) -> None:
 
         for oid in ids_da_eliminare:
             riga_codice = connDB.execute(
-                "SELECT image_path FROM codice WHERE id_oggetto =?", (oid,)
+                "SELECT immagine_path FROM codice WHERE id_oggetto =?", (oid,)
             ).fetchone()
 
             connDB.execute("DELETE FROM movimenti WHERE id_oggetto = ?", (oid,))
@@ -326,5 +322,42 @@ def _svuota_cestino_se_pieno(limite: int) -> None:
     except Exception:
         connDB.rollback()
         raise
+    finally:
+        connDB.close()
+
+def cerca_oggetti(testo: str, include_archiviati: bool = False) -> list[dict]:
+    """Cerca oggetti il cui nome o abbreviazione contengono il testo dato
+    (case-insensitive, ricerca parziale).
+    """
+    connDB = ConnectDB()
+    try:
+        pattern = f"%{testo}%"
+        query_str = (
+            "SELECT oggetto.* FROM oggetto "
+            "LEFT JOIN categorie ON categorie.id = oggetto.id_categoria "
+            "WHERE (oggetto.nome LIKE ? COLLATE NOCASE "
+            "OR oggetto.abbreviazione LIKE ? COLLATE NOCASE "
+            "OR oggetto.descrizione LIKE ? COLLATE NOCASE "
+            "OR oggetto.note LIKE ? COLLATE NOCASE "
+            "OR categorie.nome LIKE ? COLLATE NOCASE)"
+
+        )
+        parametri = [pattern] * 5
+        if not include_archiviati:
+            query_str += " AND oggetto.archiviato_il IS NULL"
+        righe = connDB.execute(query_str, parametri).fetchall()
+        return [dict(r) for r in righe]
+    finally:
+        connDB.close()
+
+def leggi_oggetto_per_abbreviazione(abbreviazione: str) -> dict | None :
+    """Cerca un oggetto per corrispondenza ESATTA di abbreviazione — usato
+    per il caso 'scansione da scanner', dove il codice letto è sempre preciso."""
+    connDB = ConnectDB()
+    try:
+        riga = connDB.execute(
+            "SELECT * FROM oggetto WHERE abbreviazione = ?", (abbreviazione,)
+        ).fetchone()
+        return dict(riga) if riga else None
     finally:
         connDB.close()

@@ -9,7 +9,7 @@ from app.db import location_repo, oggetto_repo, movimenti_repo, categoria_repo, 
 from app.gui.form_location import FormLocation
 from app.gui.form_oggetto import FormOggetto
 from app.gui.form_categoria import FormCategoria
-
+from app.gui.barra_ricerca import BarraRicerca
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
@@ -39,6 +39,16 @@ class FinestraPrincipale(QMainWindow):
         toolbar.addAction("+ New location", self._apri_form_nuova_location)
         toolbar.addAction("+ New category", self._apri_form_categoria)
         toolbar.addAction("+ New object", self._apri_form_nuovo_oggetto)
+
+        self.barra_ricerca = BarraRicerca()
+        self.barra_ricerca.location_trovata.connect(lambda loc: self._seleziona_location_in_albero(loc["id"]))
+        self.barra_ricerca.location_multipla.connect(self._mostra_location_multiple)
+        self.barra_ricerca.oggetto_trovato.connect(self._seleziona_oggetto_diretto)
+        self.barra_ricerca.risultati_multipli.connect(self._mostra_risultati_ricerca)
+        self.barra_ricerca.nessun_risultato.connect(
+            lambda testo: QMessageBox.information(self, "No Resoult", f"No object or location find for '{testo}'.")
+        )
+        toolbar.addWidget(self.barra_ricerca)
     
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
@@ -71,7 +81,6 @@ class FinestraPrincipale(QMainWindow):
         self.modello_location.clear()
         self._popola_nodo_radice(self.modello_location)
         self.albero_location.resizeColumnToContents(0)
-
 
     def _crea_albero_locations(self) -> QTreeView:
         albero = QTreeView()
@@ -141,6 +150,9 @@ class FinestraPrincipale(QMainWindow):
 
         self.checkbox_mostra_archiviati = QCheckBox("Show Archivied Object")
         self.checkbox_mostra_archiviati.stateChanged.connect(self._on_toggle_archiviati)
+        self.checkbox_mostra_archiviati.stateChanged.connect(
+            lambda: self.barra_ricerca.imposta_includi_archiviati(self.checkbox_mostra_archiviati.isChecked())
+        )
         layout.addWidget(self.checkbox_mostra_archiviati)
 
         self.tabella_oggetti = self._crea_tabella_oggetti()
@@ -149,8 +161,10 @@ class FinestraPrincipale(QMainWindow):
         return(contenitore)
 
     def _on_toggle_archiviati(self):
-        """Ricarica la tabella con/senza archiviati quando l'utente attiva/disattiva il checkbox."""
-        if hasattr(self, "id_location_corrente"):
+        """Ricarica la tabella con/senza archiviati SOLO se stai guardando una
+        location specifica — se stai visualizzando risultati di ricerca (nessuna
+        location selezionata), non c'è una query di location da rieseguire."""
+        if getattr(self, "id_location_corrente", None) is not None:
             self._aggiorna_tabella_oggetti(self.id_location_corrente)
 
     def _crea_tabella_oggetti(self) -> QTableView:
@@ -170,28 +184,12 @@ class FinestraPrincipale(QMainWindow):
 
     def _aggiorna_tabella_oggetti(self, id_location: int):
         self.id_location_corrente = id_location
-        self.modello_oggetti.setRowCount(0) # svuoto poi riempo
+        # self.modello_oggetti.setRowCount(0) # svuoto poi riempo
 
         includi_archiviati = self.checkbox_mostra_archiviati.isChecked()
         oggetti = oggetto_repo.leggi_oggetti_per_location(id_location, includi_archiviati)
-
-        for oggetto in oggetti:
-            item_nome=QStandardItem(oggetto["nome"])
-            item_nome.setData(oggetto["id"], Qt.UserRole)
-            if oggetto["archiviato_il"] is not None:
-                item_nome.setText(f"🗑 {oggetto['nome']}")
-                item_nome.setForeground(QColor("orange"))
-            riga = [
-                item_nome,
-                QStandardItem(str(oggetto["quantita"]) + " ["  + oggetto["unita_misura"] + "]"),
-                QStandardItem(oggetto["abbreviazione"]),
-            ]
-            for cella in riga:
-                cella.setEditable(False)
-            self.modello_oggetti.appendRow(riga)
-
-        self.tabella_oggetti.resizeColumnsToContents()
-
+        self._popola_tabella(oggetti)
+        
     def _crea_pannello_dettaglio(self) -> QWidget:
         contenuto = QWidget()
         layout = QVBoxLayout(contenuto)
@@ -227,6 +225,8 @@ class FinestraPrincipale(QMainWindow):
             self.label_stato_archiviazione,
         ]
         for label in campi_dettaglio:
+            if label is not self.label_immagine:
+                label.setWordWrap(True)
             label.setVisible(False)
             layout.addWidget(label)
 
@@ -260,6 +260,7 @@ class FinestraPrincipale(QMainWindow):
         scroll = QScrollArea()
         scroll.setWidget(contenuto)
         scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         return scroll
 
     def _testo_o_placeholder(self, valore, placeholder: str = "No Data")-> str:
@@ -439,3 +440,96 @@ class FinestraPrincipale(QMainWindow):
         
         if hasattr(self, "id_location_corrente") and self.id_location_corrente is not None:
             self._aggiorna_tabella_oggetti(self.id_location_corrente)
+
+    def _popola_tabella(self, oggetti: list[dict]):
+        """Riempie la tabella con una lista di oggetti già pronta — usata sia per
+        il contenuto di una location, sia per risultati di ricerca non legati a una sola."""
+        self.modello_oggetti.setRowCount(0)
+        for oggetto in oggetti:
+            item_nome = QStandardItem(oggetto["nome"])
+            item_nome.setData(oggetto["id"], Qt.UserRole)
+            if oggetto["archiviato_il"] is not None:
+                item_nome.setText(f"🗑 {oggetto['nome']}")
+                item_nome.setForeground(QColor("Orange"))
+            riga = [
+                item_nome,
+                QStandardItem(str(oggetto["quantita"]) + " [" + oggetto["unita_misura"] + "]"),
+                QStandardItem(oggetto["abbreviazione"]),
+            ]
+            for cella in riga:
+                cella.setEditable(False)
+            self.modello_oggetti.appendRow(riga)
+        self.tabella_oggetti.resizeColumnsToContents()
+
+    def _mostra_risultati_ricerca(self, oggetti: list[dict]):
+        """Mostra risultati di ricerca multipli, non legati a una singola location:
+        l'utente sceglie cliccando la riga giusta, nessuna location viene indovinata."""
+        self.id_location_corrente = None
+        self.albero_location.clearSelection()
+        self._popola_tabella(oggetti)
+
+    def _mostra_location_multiple(self, locations: list[dict]):
+        """Più location corrispondono al nome cercato: le elenca invece di
+        indovinare quale aprire — stesso principio già applicato agli oggetti."""
+        nomi = "\n".join(f"- {loc['nome']} ({loc['tipo']})" for loc in locations)
+        QMessageBox.information(
+            self, "Più location trovate",
+            f"Trovate {len(locations)} location corrispondenti:\n{nomi}\n\nAffina la ricerca per aprirne una."
+        )
+
+    def _seleziona_oggetto_diretto(self, oggetto: dict):
+        """Apre la location dell'oggetto e lo seleziona direttamente nel pannello dettaglio,
+        anche se non è visibile in tabella (es. per un oggetto archiviato)."""
+        if oggetto["id_location"] is not None:
+            self._seleziona_location_in_albero(oggetto["id_location"])
+        self.id_oggetto_selezionato = oggetto["id"]
+        self._aggiorna_pannello_dettaglio()
+
+    def _seleziona_location_in_albero(self, id_location: int):
+        """Trova il nodo dell'albero corrispondente a id_location, lo espande se serve,
+        e lo seleziona — anche se è annidato in profondità."""
+        percorso_ids = self._percorso_dalla_radice(id_location)
+        if not percorso_ids:
+            return
+
+        item_corrente = None
+        modello = self.modello_location
+        for profondita, id_livello in enumerate(percorso_ids):
+            righe_da_esplorare = modello.rowCount() if item_corrente is None else item_corrente.rowCount()
+            genitore_per_ricerca = modello if item_corrente is None else item_corrente
+
+            trovato = None
+            for riga in range(righe_da_esplorare):
+                candidato = genitore_per_ricerca.item(riga) if item_corrente is None else item_corrente.child(riga)
+                if candidato.data(Qt.UserRole) == id_livello:
+                    trovato = candidato
+                    break
+
+            if trovato is None:
+                return
+            if item_corrente is not None:
+                self.albero_location.expand(item_corrente.index())
+                self._espandi_se_necessario(item_corrente)
+                # rifai la ricerca in questo livello ora che i figli veri sono stati caricati
+                for riga in range(item_corrente.rowCount()):
+                    if item_corrente.child(riga).data(Qt.UserRole) == id_livello:
+                        trovato = item_corrente.child(riga)
+                        break
+
+            item_corrente = trovato
+
+        self.albero_location.setCurrentIndex(item_corrente.index())
+        self.albero_location.scrollTo(item_corrente.index())
+        self._aggiorna_tabella_oggetti(id_location)
+
+    def _percorso_dalla_radice(self, id_location: int) -> list[int]:
+        """Costruisce la catena di id dalla radice fino a id_location,
+        risalendo tramite id_genitore. Es: [id_stanza, id_mobile, id_cassetto]."""
+        percorso = []
+        corrente = location_repo.leggi_location(id_location)
+        while corrente is not None:
+            percorso.insert(0, corrente["id"])
+            if corrente["id_genitore"] is None:
+                break
+            corrente = location_repo.leggi_location(corrente["id_genitore"])
+        return percorso    

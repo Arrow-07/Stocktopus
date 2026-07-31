@@ -1,4 +1,5 @@
 import shutil
+import uuid
 from pathlib import Path
 
 CARTELLA_IMMAGINI = Path(__file__).parent.parent.parent / "data" / "immagini"
@@ -111,7 +112,7 @@ class FormOggetto(QDialog):
 
     def _popola_combo_location(self, id_preselezionata):
             
-            self.combo_categoria.addItem("-- None --", None)
+            self.combo_location.addItem("-- None --", None)
             indice_da_selezionare=0
 
             for id_loc, testo, profondita in self._elenco_location_flat():
@@ -134,7 +135,9 @@ class FormOggetto(QDialog):
         if  not precorso:
             return
         CARTELLA_IMMAGINI.mkdir(parents=True, exist_ok=True)
-        destinazione = CARTELLA_IMMAGINI / Path(precorso).name
+        estensione = Path(precorso).suffix
+        nome_univoco = f"{uuid.uuid4().hex}{estensione}"
+        destinazione = CARTELLA_IMMAGINI / nome_univoco
         shutil.copy(precorso, destinazione)
         self.campo_immagine_path.setText(str(destinazione))
 
