@@ -1,3 +1,8 @@
+import shutil
+from pathlib import Path
+
+CARTELLA_IMMAGINI = Path(__file__).parent.parent.parent / "data" / "immagini"
+
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QComboBox, QSpinBox, QTextEdit, QPushButton, QHBoxLayout, QMessageBox, QFileDialog
 )
@@ -10,9 +15,12 @@ class FormOggetto(QDialog):
     selezionata nell' albero al momento dell' apertura del form).
     """
 
-    def __init__(self, parent = None, id_location_preselezionata: int | None = None):
+    def __init__(self, parent = None, id_location_preselezionata: int | None = None, id_oggetto=None):
         super().__init__(parent)
-        self.setWindowTitle("New Object")
+
+        self.id_oggetto = id_oggetto
+
+        self.setWindowTitle("Edit Objet" if id_oggetto else "New Object")
         self.setMinimumWidth(400)
 
         layout = QFormLayout(self)
@@ -69,6 +77,26 @@ class FormOggetto(QDialog):
         riga_bottoni.addWidget(bottone_annulla)
         layout.addRow(riga_bottoni)
 
+        if id_oggetto:
+            self._precompila(id_oggetto)
+
+    def _precompila(self, id_oggetto):
+        oggetto= oggetto_repo.leggi_oggetto(id_oggetto, include_archiviati=True)
+        self.campo_nome.setText(oggetto["nome"])
+        self.campo_quantita.setValue(oggetto["quantita"])
+        self.campo_unita_misura.setText(oggetto["unita_misura"])
+        self.campo_descrizione.setText(oggetto["descrizione"] or "")
+        self.campo_data_acqisto.setText(oggetto["data_acquisto"] or "")
+        self.campo_note.setPlainText(oggetto["note"] or "")
+        self.campo_immagine_path.setText(oggetto["immagine_path"] or "")
+        if oggetto["id_categoria"]:
+            indice = self.combo_categoria.findData(oggetto["id_categoria"])
+            self.combo_categoria.setCurrentIndex(indice)
+        if oggetto["id_location"]:
+            indice = self.combo_location.findData(oggetto["id_location"])
+            self.combo_location.setCurrentIndex(indice)
+        self.campo_dettagli.setEnabled(False)
+
     def _popola_combo_categoria(self):
         self.combo_categoria.addItem("-- None --", None)
         for id_cat, testo, profondita in self._elenco_categorie_flat():
@@ -103,8 +131,13 @@ class FormOggetto(QDialog):
         precorso, _ = QFileDialog.getOpenFileName(
             self, "Select Image", "", "Image (*.png *.jpg *.jpeg)"
         )
-        if precorso:
-            self.campo_immagine_path.setText(precorso)
+        if  not precorso:
+            return
+        CARTELLA_IMMAGINI.mkdir(parents=True, exist_ok=True)
+        destinazione = CARTELLA_IMMAGINI / Path(precorso).name
+        shutil.copy(precorso, destinazione)
+        self.campo_immagine_path.setText(str(destinazione))
+
 
     def _on_salva(self):
         nome = self.campo_nome.text().strip()
@@ -114,18 +147,30 @@ class FormOggetto(QDialog):
             return
 
         try:
-            oggetto_repo.crea_oggetto(
-                nome=nome,
-                quantita=self.campo_quantita.value(),
-                unita_di_misura=self.campo_unita_misura.text().strip() or "pz",
-                id_categoria=self.combo_categoria.currentData(),
-                id_location=self.combo_location.currentData(),
-                descrizione=self.campo_descrizione.text().strip() or None,
-                data_acquisto=self.campo_data_acqisto.text().strip() or None,
-                note=self.campo_note.toPlainText().strip() or None,
-                immagine_path=self.campo_immagine_path.text().strip() or None,
-                dettagli=self.campo_dettagli.text().strip() or None,
-            )
+            if self.id_oggetto:
+                oggetto_repo.aggiorna_oggetto(
+                    self.id_oggetto, nome=nome, quantita=self.campo_quantita.value(),
+                    unita_di_misura=self.campo_unita_misura.text().strip() or "pz",
+                    id_categoria=self.combo_categoria.currentData(),
+                    id_location=self.combo_location.currentData(),
+                    descrizione=self.campo_descrizione.text().strip() or None,
+                    data_acquisto=self.campo_data_acqisto.text().strip() or None,
+                    note=self.campo_note.toPlainText().strip() or None,
+                    immagine_path=self.campo_immagine_path.text().strip() or None,
+                )
+            else:
+                oggetto_repo.crea_oggetto(
+                    nome=nome,
+                    quantita=self.campo_quantita.value(),
+                    unita_di_misura=self.campo_unita_misura.text().strip() or "pz",
+                    id_categoria=self.combo_categoria.currentData(),
+                    id_location=self.combo_location.currentData(),
+                    descrizione=self.campo_descrizione.text().strip() or None,
+                    data_acquisto=self.campo_data_acqisto.text().strip() or None,
+                    note=self.campo_note.toPlainText().strip() or None,
+                    immagine_path=self.campo_immagine_path.text().strip() or None,
+                    dettagli=self.campo_dettagli.text().strip() or None,
+                )
         except Exception as errore:
             QMessageBox.critical(self, "Error while SAVING", str(errore))
             return

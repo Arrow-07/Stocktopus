@@ -1,6 +1,8 @@
 from app.db.initdb import ConnectDB
 import re
 
+from pathlib import Path
+
 def prefisso(tipo: str) -> str:
     pulito = re.sub(r"[^A-Za-z]", "", tipo)
     return pulito.upper()[:3] or "XXX"
@@ -147,6 +149,32 @@ def _qualcuno_ha_oggetti(connDB, ids_location: list[int]) -> bool:
     )
     return cur.fetchone()[0] > 0
 
+def _nullifica_movimenti_location(connDB, location_id: int) -> None:
+    connDB.execute("UPDATE movimenti SET id_location = NULL WHERE id_location = ?", (location_id,))
+    connDB.execute("UPDATE movimenti SET id_location_destinazione = NULL WHERE id_location_destinazione = ?", (location_id,))
+
+def _elimina_codici_di_locations(connDB, ids_location: list[int]) -> None:
+    """
+    Cancella eventuali codici (record + immagine su disco) associati alle
+    location indicate. Va chiamata PRIMA di cancellare le location stesse,
+    altrimenti la foreign key codice->locations blocca l'operazione.
+    """
+    if not ids_location:
+        return
+    placeholders= ",".join("?"  * len(ids_location))
+    righe = connDB.execute(
+        f"SELECT id, image_path FROM codice WHERE id_location IN ({placeholders})",
+        ids_location
+    ).fetchall()
+
+    for riga in righe:
+        connDB.execute("DELETE FROM codice WHERE id = ?", (riga["id"],))
+        if riga["immagine_path"]:
+            percorso = Path(riga["immagine_path"])
+            if percorso.exists():
+                percorso.unlink()
+
+
 def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
     """
     Elimina una location dal database, gestendo l'intera gerarchia di eventuali
@@ -177,7 +205,9 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
 
         if azione_figli == "elimina":
             # cancella dal più profondo al più superficiale, altrimenti la FK blocca
+            _elimina_codici_di_locations(connDB, discendenti)
             for id_discendente in reversed(discendenti):
+                _nullifica_movimenti_location(connDB, id_discendente)
                 connDB.execute("DELETE FROM locations WHERE id = ?", (id_discendente,))
 
         elif azione_figli == "sposta":
@@ -192,6 +222,8 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
                 (nuovo_genitore, location_id)
             )
 
+        _elimina_codici_di_locations(connDB, discendenti)
+        _nullifica_movimenti_location(connDB, location_id)
         cur = connDB.execute("DELETE FROM locations WHERE id = ?", (location_id,))
         connDB.commit()
         return cur.rowcount > 0

@@ -1,5 +1,6 @@
 from app.db.initdb import ConnectDB
 from datetime import datetime
+from pathlib import Path
 
 def _percorso_codici_categoria(connDB, categoria_id: int) -> list[str]:
     """Risale la gerarchia delle categorie dal livello specificato fino alla radice,
@@ -308,9 +309,19 @@ def _svuota_cestino_se_pieno(limite: int) -> None:
         ids_da_eliminare = [r["id"] for r in righe[:eccedenza]]  # i più vecchi
 
         for oid in ids_da_eliminare:
+            riga_codice = connDB.execute(
+                "SELECT image_path FROM codice WHERE id_oggetto =?", (oid,)
+            ).fetchone()
+
             connDB.execute("DELETE FROM movimenti WHERE id_oggetto = ?", (oid,))
             connDB.execute("DELETE FROM codice WHERE id_oggetto = ?", (oid,))
             connDB.execute("DELETE FROM oggetto WHERE id = ?", (oid,))
+
+            if riga_codice and riga_codice["immagine_path"]:
+                percorso = Path(riga_codice["immagine_path"])
+                if percorso.exists():
+                    percorso.unlink()
+                    
         connDB.commit()
     except Exception:
         connDB.rollback()

@@ -10,7 +10,7 @@ ALTEZZA_A4 = int(11.69 * DPI)    # ~3508 px
 MARGINE = int(0.25 * DPI)         # margine esterno del foglio
 
 
-def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4) -> list[Path]:
+def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4, cartella_destinazione: Path | None = None) -> list[Path]:
     """
     Compone una o più immagini A4 (300 DPI) con le etichette pronte da stampare.
 
@@ -26,6 +26,9 @@ def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4) -
         superano la capienza di una singola pagina).
     """
     CARTELLA_FOGLI.mkdir(parents=True, exist_ok=True)
+
+    cartella = cartella_destinazione or CARTELLA_FOGLI
+    cartella.mkdir(parents=True, exist_ok=True)
 
     per_pagina = colonne * righe
     numero_pagine = math.ceil(len(codici) / per_pagina)
@@ -69,7 +72,7 @@ def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4) -
             y_testo = y_immagine + immagine_codice.height + 5
             draw.text((x_testo, y_testo), testo, fill="black", font=font)
 
-        percorso_foglio = CARTELLA_FOGLI / f"foglio_etichette_{numero_pagina + 1}.png"
+        percorso_foglio = cartella / f"foglio_etichette_{numero_pagina + 1}.png"
         foglio.save(percorso_foglio)
         percorsi_generati.append(percorso_foglio)
 

@@ -239,12 +239,20 @@ class FinestraPrincipale(QMainWindow):
         riga_bottoni = QHBoxLayout()
         self.bottone_preleva = QPushButton("Retrieve Item")
         self.bottone_deposita = QPushButton("Store Item")
+        self.bottone_modifica = QPushButton("Edit Item")
+        self.bottone_archivia_ripristina = QPushButton("Archive")
         self.bottone_preleva.setVisible(False)
         self.bottone_deposita.setVisible(False)
+        self.bottone_modifica.setVisible(False)
+        self.bottone_archivia_ripristina.setVisible(False)
         self.bottone_preleva.clicked.connect(self._on_preleva_cliccato)
         self.bottone_deposita.clicked.connect(self._on_deposita_cliccato)
+        self.bottone_modifica.clicked.connect(self._on_modifica_cliccato)
+        self.bottone_archivia_ripristina.clicked.connect(self._on_archivia_riprisina_cliccato)
         riga_bottoni.addWidget(self.bottone_preleva)
         riga_bottoni.addWidget(self.bottone_deposita)
+        riga_bottoni.addWidget(self.bottone_modifica)
+        riga_bottoni.addWidget(self.bottone_archivia_ripristina)
         layout.addLayout(riga_bottoni)
 
         layout.addStretch()
@@ -329,24 +337,79 @@ class FinestraPrincipale(QMainWindow):
             )
             self.label_immagine.setPixmap(pixmap)
         else:
-            self.label_immagine.setText("N/A")
+            self.label_immagine.setText("📷\nNo Image")
+            self.label_immagine.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.label_immagine.setStyleSheet("border: 1px dashed gray; color: gray")
 
         #archiviato
         if oggetto["archiviato_il"] is not None:
             self.label_stato_archiviazione.setText(f"⚠ Archived on: {oggetto['archiviato_il']}")
             self.label_stato_archiviazione.setStyleSheet("color: orange;")
+            self.bottone_archivia_ripristina.setText("Unarchive")
         else:
             self.label_stato_archiviazione.setText("State: Active")
             self.label_stato_archiviazione.setStyleSheet("color: green;")
-
+            self.bottone_archivia_ripristina.setText("Archive")
+    
         campi_dettaglio = [
             self.label_nome, self.label_id, self.label_categoria, self.label_location,
             self.label_descrizione, self.label_abbreviazione, self.label_quantita,
             self.label_data_acquisto, self.label_note, self.label_immagine,
             self.label_stato_archiviazione,
         ]
-        for widget in campi_dettaglio + [self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita]:
+        for widget in campi_dettaglio + [self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita, self.bottone_modifica, self.bottone_archivia_ripristina]:
             widget.setVisible(True)
+
+    def _on_archivia_riprisina_cliccato(self):
+        oggetto = oggetto_repo.leggi_oggetto(self.id_oggetto_selezionato, include_archiviati=True)
+
+        if not oggetto:
+            return
+        
+        try:
+            if oggetto["archiviato_il"] is not None:
+                oggetto_repo.ripristina_oggetto(self.id_oggetto_selezionato)
+            else:
+                risposta = QMessageBox.question(self, "Confirm", f"Archive '{oggetto['nome']}' ?")
+                if risposta != QMessageBox.Yes:
+                    return
+                oggetto_repo.elimina_oggetto(self.id_oggetto_selezionato)
+
+        except Exception as errore:
+            QMessageBox.critical(self, "Error", str(errore))
+            return
+        
+        self._ricarica_tabella_corrente()
+
+        includi_archiviati = self.checkbox_mostra_archiviati.isChecked()
+
+        if oggetto["archiviato_il"] is None and not includi_archiviati:
+            self._nascondi_pannello_dettaglio()
+        else:
+            self._aggiorna_pannello_dettaglio()
+        
+    def _nascondi_pannello_dettaglio(self):
+        """Nascondi i dettagli quando nessun oggetto è selezionato o loggetto sparisce"""
+        self.id_oggetto_selezionato = None
+        self.label_nessuna_selezione.setVisible(True)
+
+        campi_dettagli = [
+            self.label_nome, self.label_id, self.label_categoria, self.label_location,
+            self.label_descrizione, self.label_abbreviazione, self.label_quantita,
+            self.label_data_acquisto, self.label_note, self.label_immagine,
+            self.label_stato_archiviazione, self.spin_quantita_movimento,
+            self.bottone_preleva, self.bottone_deposita, self.bottone_modifica,
+            self.bottone_archivia_ripristina
+        ]
+
+        for campo in campi_dettagli:
+            campo.setVisible(False)
+
+    def _on_modifica_cliccato(self):
+        form = FormOggetto(self, id_oggetto=self.id_oggetto_selezionato)
+        if form.exec():
+            self._aggiorna_pannello_dettaglio()
+            self._ricarica_tabella_corrente()
 
     def _on_preleva_cliccato(self):
         quantita = self.spin_quantita_movimento.value()
@@ -373,7 +436,6 @@ class FinestraPrincipale(QMainWindow):
     def _ricarica_tabella_corrente(self):
         """Rilegge la tabella oggetti della location attualmente mostrata,
         così la colonna quantità riflette subito il nuovo valore."""
-        oggetto = oggetto_repo.leggi_oggetto(self.id_oggetto_selezionato)
-        if oggetto:
-            self._aggiorna_tabella_oggetti(oggetto["id_location"])
-
+        
+        if hasattr(self, "id_location_corrente") and self.id_location_corrente is not None:
+            self._aggiorna_tabella_oggetti(self.id_location_corrente)

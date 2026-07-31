@@ -2,6 +2,13 @@ from pathlib import Path
 from app.codes.generate_codes import crea_bar_code as genera_barcode, crea_qr_code as genera_qr
 from app.db import codice_repo, oggetto_repo, location_repo
 
+def ottieni_immagine_codice(riga_codice: dict) -> Path:
+    percorso = Path(riga_codice["immagine_path"])
+    if percorso.exists():
+        return percorso
+    testo, tipo = riga_codice["codice"], riga_codice["tipo_codice"]
+    return genera_qr(testo) if tipo == "qr" else genera_barcode(testo)
+
 
 def _genera_immagine(testo: str, tipo_codice: str) -> Path:
     """Genera il file immagine del codice QR o barcode a partire dal testo dato.
@@ -21,6 +28,31 @@ def _genera_immagine(testo: str, tipo_codice: str) -> Path:
     elif tipo_codice == "barcode":
         return genera_barcode(testo)
     raise ValueError("tipo_codice deve essere 'qr' o 'barcode'.")
+
+
+def _elimina_codice_e_immagine(riga_codice: dict | None) -> None:
+    if riga_codice is None:
+        return
+    immagine = Path(riga_codice["immagine_path"])
+    if immagine.exists():
+        immagine.unlink()
+    codice_repo.elimina_codice(riga_codice["id"])
+
+
+def elimina_codice_oggetto(id_oggetto: int) -> bool:
+    riga = codice_repo.leggi_codice_oggetto(id_oggetto)
+    if riga is None:
+        return False
+    _elimina_codice_e_immagine(riga)
+    return True
+
+
+def elimina_codice_location(id_location: int) -> bool:
+    riga = codice_repo.leggi_codice_location(id_location)
+    if riga is None:
+        return False
+    _elimina_codice_e_immagine(riga)
+    return True
 
 
 def genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
@@ -99,12 +131,7 @@ def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr", conferma: 
             "permanentemente. Richiamare con conferma=True dopo l'avviso all'utente."
         )
 
-    esistente = codice_repo.leggi_codice_oggetto(id_oggetto)
-    if esistente is not None:
-        vecchia_immagine = Path(esistente["immagine_path"])
-        if vecchia_immagine.exists():
-            vecchia_immagine.unlink()
-        codice_repo.elimina_codice(esistente["id"])
+    _elimina_codice_e_immagine(codice_repo.leggi_codice_oggetto(id_oggetto))
 
     oggetto = oggetto_repo.leggi_oggetto(id_oggetto)
     if oggetto is None:
@@ -136,13 +163,8 @@ def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma
             "permanentemente. Richiamare con conferma=True dopo l'avviso all'utente."
         )
 
-    esistente = codice_repo.leggi_codice_location(id_location)
-    if esistente is not None:
-        vecchia_immagine = Path(esistente["immagine_path"])
-        if vecchia_immagine.exists():
-            vecchia_immagine.unlink()
-        codice_repo.elimina_codice(esistente["id"])
-
+    _elimina_codice_e_immagine(codice_repo.leggi_codice_location(id_location))
+    
     location = location_repo.leggi_location(id_location)
     if location is None:
         raise Exception("Location non trovata.")
