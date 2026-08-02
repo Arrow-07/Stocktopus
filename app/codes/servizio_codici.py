@@ -173,3 +173,13 @@ def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma
     percorso = _genera_immagine(testo, tipo_codice)
     id_codice = codice_repo.crea_codice(tipo_codice, testo, str(percorso), id_location=id_location)
     return {"id": id_codice, "tipo_codice": tipo_codice, "codice": testo, "immagine_path": str(percorso)}
+
+
+def ottieni_o_genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
+    riga = codice_repo.leggi_codice_oggetto(id_oggetto)
+    return riga if riga else genera_codice_oggetto(id_oggetto, tipo_codice)
+
+
+def ottieni_o_genera_codice_location(id_location: int, tipo_codice: str = "qr") -> dict:
+    riga = codice_repo.leggi_codice_location(id_location)
+    return riga if riga else genera_codice_location(id_location, tipo_codice)

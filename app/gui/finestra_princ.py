@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox
+QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog
 )
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
@@ -10,6 +10,7 @@ from app.gui.form_location import FormLocation
 from app.gui.form_oggetto import FormOggetto
 from app.gui.form_categoria import FormCategoria
 from app.gui.barra_ricerca import BarraRicerca
+from app.codes import servizio_codici, foglio_di_stampa
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
@@ -39,6 +40,8 @@ class FinestraPrincipale(QMainWindow):
         toolbar.addAction("+ New location", self._apri_form_nuova_location)
         toolbar.addAction("+ New category", self._apri_form_categoria)
         toolbar.addAction("+ New object", self._apri_form_nuovo_oggetto)
+        toolbar.addAction("Print Location Codes", self._apri_stampa_location)
+        toolbar.addAction("Print Category Codes", self._apri_stampa_categoria)
 
         self.barra_ricerca = BarraRicerca()
         self.barra_ricerca.location_trovata.connect(lambda loc: self._seleziona_location_in_albero(loc["id"]))
@@ -255,6 +258,24 @@ class FinestraPrincipale(QMainWindow):
         riga_bottoni.addWidget(self.bottone_archivia_ripristina)
         layout.addLayout(riga_bottoni)
 
+        self.label_anteprima_codice = QLabel()
+        self.label_anteprima_codice.setFixedSize(150,150)
+        self.label_anteprima_codice.setStyleSheet("border: 1px solid gray;")
+        self.label_anteprima_codice.setAlignment(Qt.AlignCenter)
+        self.label_anteprima_codice.setVisible(False)
+        layout.addWidget(self.label_anteprima_codice)
+
+        riga_codice_bottoni = QHBoxLayout()
+        self.bottone_genera_codice = QPushButton("Generate Code")
+        self.bottone_stampa_codice = QPushButton("Print Code")
+        self.bottone_genera_codice.setVisible(False)
+        self.bottone_stampa_codice.setVisible(False)
+        self.bottone_genera_codice.clicked.connect(self._on_genera_codice_cliccato)
+        self.bottone_stampa_codice.clicked.connect(self._on_stampa_etichetta_cliccato)
+        riga_codice_bottoni.addWidget(self.bottone_genera_codice)
+        riga_codice_bottoni.addWidget(self.bottone_stampa_codice)
+        layout.addLayout(riga_codice_bottoni)
+
         layout.addStretch()
 
         scroll = QScrollArea()
@@ -351,14 +372,27 @@ class FinestraPrincipale(QMainWindow):
             self.label_stato_archiviazione.setText("State: Active")
             self.label_stato_archiviazione.setStyleSheet("color: green;")
             self.bottone_archivia_ripristina.setText("Archive")
-    
+
+        #codice stampa + genera
+        riga_codice = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato)
+        self.label_anteprima_codice.clear()
+        if riga_codice:
+            pixmap = QPixmap(riga_codice["immagine_path"]).scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.label_anteprima_codice.setPixmap(pixmap)
+            self.bottone_genera_codice.setText("Regenerate Code")
+        else:
+            self.bottone_genera_codice.setText("Generate Code")
+            self.label_anteprima_codice.setText("No Code")
+
         campi_dettaglio = [
             self.label_nome, self.label_id, self.label_categoria, self.label_location,
             self.label_descrizione, self.label_abbreviazione, self.label_quantita,
             self.label_data_acquisto, self.label_note, self.label_immagine,
             self.label_stato_archiviazione,
+            self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita, self.bottone_modifica, self.bottone_archivia_ripristina,
+            self.label_anteprima_codice, self.bottone_genera_codice, self.bottone_stampa_codice
         ]
-        for widget in campi_dettaglio + [self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita, self.bottone_modifica, self.bottone_archivia_ripristina]:
+        for widget in campi_dettaglio:
             widget.setVisible(True)
 
     def _on_archivia_riprisina_cliccato(self):
@@ -433,6 +467,63 @@ class FinestraPrincipale(QMainWindow):
     
         self._aggiorna_pannello_dettaglio()
         self._ricarica_tabella_corrente()
+
+    def _on_genera_codice_cliccato(self):
+        esiste = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato) is not None
+        tipo = "qr"
+
+        try:
+            if esiste:
+                servizio_codici.rigenera_codice_oggetto(self.id_oggetto_selezionato)
+            else:
+                servizio_codici.genera_codice_oggetto(self.id_oggetto_selezionato, tipo)
+        except Exception as errore:
+            QMessageBox.critical(self, "Error", str(errore))
+            return
+        self._aggiorna_pannello_dettaglio()
+
+    def _stampa_codici(self, righe_codice: list[dict]):
+        if not righe_codice:
+            QMessageBox.information(self, "No Item", "No item codes to print.")
+            return
+        cartella = QFileDialog.getExistingDirectory(self, "Save code label sheet as...")
+        if not cartella:
+            return
+        percorsi = foglio_di_stampa.crea_fogli_etichette(righe_codice, cartella_destinazione=Path(cartella))
+        QMessageBox.information(self, "Sheet created", f"Created {len(percorsi)} label sheet{'s' if len(percorsi) !=1 else ' '}.")
+
+    def _on_stampa_etichetta_cliccato(self):
+        riga = servizio_codici.ottieni_o_genera_codice_oggetto(self.id_oggetto_selezionato)
+        self._stampa_codici([riga])
+
+    def _apri_stampa_location(self):
+        if not getattr(self, "id_location_corrente", None):
+            QMessageBox.information(self, "No location", "Please Select a location First.")
+            return
+        oggetti = oggetto_repo.leggi_oggetti_per_location(self.id_location_corrente)
+        righe = [servizio_codici.ottieni_o_genera_codice_oggetto(o["id"]) for o in oggetti]
+        self._stampa_codici(righe)
+
+    def _tutte_categorie_flat(self, id_genitore = None):
+        risultato = []
+        for c in categoria_repo.leggi_categorie_figlie(id_genitore):
+            risultato.append(c)
+            risultato.extend(self._tutte_categorie_flat(c["id"]))
+        return risultato
+
+    def _apri_stampa_categoria(self):
+        tutte = self._tutte_categorie_flat()
+        if not tutte:
+            QMessageBox.information(self, "No Category", "No Category Find.")
+            return
+        nomi = [c["nome"] for c in tutte]
+        nome, ok = QInputDialog.getItem(self, "Print by category", "Category:", nomi, editable=False)
+        if not ok:
+            return
+        id_cat = next(c["id"] for c in tutte if c["nome"] == nome)
+        oggetti = oggetto_repo.leggi_oggetti_per_categoria(id_cat)
+        righe  = [servizio_codici.ottieni_o_genera_codice_oggetto(o["id"]) for o in oggetti]
+        self._stampa_codici(righe)
 
     def _ricarica_tabella_corrente(self):
         """Rilegge la tabella oggetti della location attualmente mostrata,

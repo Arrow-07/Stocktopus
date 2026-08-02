@@ -1,6 +1,7 @@
 import math
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
+from datetime import datetime
 
 CARTELLA_FOGLI = Path(__file__).parent.parent.parent / "data" / "printable_sheets"
 
@@ -29,6 +30,8 @@ def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4, c
 
     cartella = cartella_destinazione or CARTELLA_FOGLI
     cartella.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     per_pagina = colonne * righe
     numero_pagine = math.ceil(len(codici) / per_pagina)
@@ -72,7 +75,7 @@ def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4, c
             y_testo = y_immagine + immagine_codice.height + 5
             draw.text((x_testo, y_testo), testo, fill="black", font=font)
 
-        percorso_foglio = cartella / f"foglio_etichette_{numero_pagina + 1}.png"
+        percorso_foglio = cartella / f"foglio_etichette_{timestamp}_{numero_pagina + 1}.png"
         foglio.save(percorso_foglio)
         percorsi_generati.append(percorso_foglio)
 
