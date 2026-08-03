@@ -3,7 +3,7 @@ from app.db.initdb import ConnectDB
 
 def crea_codice(tipo_codice: str, codice: str, immagine_path: str, id_oggetto: int | None = None, id_location: int | None = None) -> int:
     if (id_oggetto is None) == (id_location is None):
-        raise ValueError("Specificare esattamente uno tra id_oggetto e id_location.")
+        raise ValueError("Specify exactly one of id_oggetto and id_location.")
 
     connDB = ConnectDB()
     try:

@@ -21,7 +21,7 @@ class FormOggetto(QDialog):
 
         self.id_oggetto = id_oggetto
 
-        self.setWindowTitle("Edit Objet" if id_oggetto else "New Object")
+        self.setWindowTitle("Edit item" if id_oggetto else "New Item")
         self.setMinimumWidth(400)
 
         layout = QFormLayout(self)
@@ -50,7 +50,7 @@ class FormOggetto(QDialog):
         layout.addRow("Code Details:", self.campo_dettagli)
 
         self.campo_descrizione = QLineEdit()
-        layout.addRow("Descripptioons:", self.campo_descrizione)
+        layout.addRow("Descriptions:", self.campo_descrizione)
 
         self.campo_data_acqisto = QLineEdit()
         self.campo_data_acqisto.setPlaceholderText("YYYY-MM-DD ")
@@ -140,7 +140,6 @@ class FormOggetto(QDialog):
         destinazione = CARTELLA_IMMAGINI / nome_univoco
         shutil.copy(precorso, destinazione)
         self.campo_immagine_path.setText(str(destinazione))
-
 
     def _on_salva(self):
         nome = self.campo_nome.text().strip()

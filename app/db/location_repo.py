@@ -194,12 +194,12 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
 
         if _qualcuno_ha_oggetti(connDB, [location_id] + discendenti):
             raise Exception(
-                "La location (o una sua sotto-location) contiene oggetti e non può essere eliminata."
+                "The location (or one of its sub-locations) contains items and cannot be deleted."
             )
 
         if discendenti and azione_figli not in ("elimina", "sposta"):
             raise Exception(
-                "La location contiene sotto-location. Specificare 'elimina' o 'sposta'."
+                "The location contains sub-locations. Specify 'elimina' or 'sposta'."
             )
 
         if azione_figli == "elimina":

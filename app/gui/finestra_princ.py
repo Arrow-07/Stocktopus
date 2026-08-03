@@ -39,7 +39,7 @@ class FinestraPrincipale(QMainWindow):
         toolbar = self.addToolBar("Action")
         toolbar.addAction("+ New location", self._apri_form_nuova_location)
         toolbar.addAction("+ New category", self._apri_form_categoria)
-        toolbar.addAction("+ New object", self._apri_form_nuovo_oggetto)
+        toolbar.addAction("+ New item", self._apri_form_nuovo_oggetto)
         toolbar.addAction("Print Location Codes", self._apri_stampa_location)
         toolbar.addAction("Print Category Codes", self._apri_stampa_categoria)
 
@@ -49,7 +49,7 @@ class FinestraPrincipale(QMainWindow):
         self.barra_ricerca.oggetto_trovato.connect(self._seleziona_oggetto_diretto)
         self.barra_ricerca.risultati_multipli.connect(self._mostra_risultati_ricerca)
         self.barra_ricerca.nessun_risultato.connect(
-            lambda testo: QMessageBox.information(self, "No Resoult", f"No object or location find for '{testo}'.")
+            lambda testo: QMessageBox.information(self, "No Resoult", f"No item or location find for '{testo}'.")
         )
         toolbar.addWidget(self.barra_ricerca)
     
@@ -106,7 +106,7 @@ class FinestraPrincipale(QMainWindow):
         """
 
         radici = location_repo.leggi_locations_figlie(None)
-        print(f"DEBUG: trovate {len(radici)} location radice") 
+        #print(f"DEBUG: trovate {len(radici)} location radice") 
         for location in radici:
             item = self._crea_item_location(location)
             modello.appendRow(item)
@@ -151,7 +151,7 @@ class FinestraPrincipale(QMainWindow):
         layout = QVBoxLayout(contenitore)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.checkbox_mostra_archiviati = QCheckBox("Show Archivied Object")
+        self.checkbox_mostra_archiviati = QCheckBox("Show Archivied item")
         self.checkbox_mostra_archiviati.stateChanged.connect(self._on_toggle_archiviati)
         self.checkbox_mostra_archiviati.stateChanged.connect(
             lambda: self.barra_ricerca.imposta_includi_archiviati(self.checkbox_mostra_archiviati.isChecked())
@@ -243,19 +243,23 @@ class FinestraPrincipale(QMainWindow):
         self.bottone_preleva = QPushButton("Retrieve Item")
         self.bottone_deposita = QPushButton("Store Item")
         self.bottone_modifica = QPushButton("Edit Item")
-        self.bottone_archivia_ripristina = QPushButton("Archive")
+        self.bottone_archivia_ripristina = QPushButton("Archive Item")
+        self.bottone_trasferisci = QPushButton("Transfert Item")
         self.bottone_preleva.setVisible(False)
         self.bottone_deposita.setVisible(False)
         self.bottone_modifica.setVisible(False)
         self.bottone_archivia_ripristina.setVisible(False)
+        self.bottone_trasferisci.setVisible(False)
         self.bottone_preleva.clicked.connect(self._on_preleva_cliccato)
         self.bottone_deposita.clicked.connect(self._on_deposita_cliccato)
         self.bottone_modifica.clicked.connect(self._on_modifica_cliccato)
         self.bottone_archivia_ripristina.clicked.connect(self._on_archivia_riprisina_cliccato)
+        self.bottone_trasferisci.clicked.connect(self._on_trasferisci_cliccato)
         riga_bottoni.addWidget(self.bottone_preleva)
         riga_bottoni.addWidget(self.bottone_deposita)
         riga_bottoni.addWidget(self.bottone_modifica)
         riga_bottoni.addWidget(self.bottone_archivia_ripristina)
+        riga_bottoni.addWidget(self.bottone_trasferisci)
         layout.addLayout(riga_bottoni)
 
         self.label_anteprima_codice = QLabel()
@@ -389,7 +393,7 @@ class FinestraPrincipale(QMainWindow):
             self.label_descrizione, self.label_abbreviazione, self.label_quantita,
             self.label_data_acquisto, self.label_note, self.label_immagine,
             self.label_stato_archiviazione,
-            self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita, self.bottone_modifica, self.bottone_archivia_ripristina,
+            self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita, self.bottone_modifica, self.bottone_archivia_ripristina, self.bottone_trasferisci,
             self.label_anteprima_codice, self.bottone_genera_codice, self.bottone_stampa_codice
         ]
         for widget in campi_dettaglio:
@@ -468,6 +472,38 @@ class FinestraPrincipale(QMainWindow):
         self._aggiorna_pannello_dettaglio()
         self._ricarica_tabella_corrente()
 
+    def _on_trasferisci_cliccato(self):
+        tutte = self._elenco_location_flat_globale()
+        if not tutte:
+            QMessageBox.information(self, "No Location", "No locations available.")
+            return
+
+        nomi = [f"{'   ' * p}{n}" for _, n, p in tutte]
+        scelta, ok = QInputDialog.getItem(self, "Transfer item", "New Location:", nomi, editable=False)
+        if not ok :
+            return
+        indice = nomi.index(scelta)
+        id_destinazione = tutte[indice][0]
+
+        try:
+            movimenti_repo.trasferisci_oggetto(self.id_oggetto_selezionato, id_destinazione)
+        except Exception as errore:
+            QMessageBox.critical(self, "Error:", str(errore))
+            return
+
+        self._aggiorna_pannello_dettaglio()
+        if getattr(self, "id_location_corrente", None):
+            self._aggiorna_tabella_oggetti(self.id_location_corrente)
+
+    def _elenco_location_flat_globale(self, id_genitore=None, profondita=0):
+        risultato = []
+
+        for loc in location_repo.leggi_locations_figlie(id_genitore):
+            risultato.append((loc["id"], loc["nome"], profondita))
+            risultato.extend(self._elenco_location_flat_globale(loc["id"], profondita +1))
+
+        return risultato
+    
     def _on_genera_codice_cliccato(self):
         esiste = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato) is not None
         tipo = "qr"
@@ -564,8 +600,8 @@ class FinestraPrincipale(QMainWindow):
         indovinare quale aprire — stesso principio già applicato agli oggetti."""
         nomi = "\n".join(f"- {loc['nome']} ({loc['tipo']})" for loc in locations)
         QMessageBox.information(
-            self, "Più location trovate",
-            f"Trovate {len(locations)} location corrispondenti:\n{nomi}\n\nAffina la ricerca per aprirne una."
+            self, "Multiple locations found:",
+            f"found: {len(locations)} matching locations were found:\n{nomi}\n\nRefine your search to open one."
         )
 
     def _seleziona_oggetto_diretto(self, oggetto: dict):

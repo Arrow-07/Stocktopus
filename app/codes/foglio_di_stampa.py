@@ -75,7 +75,7 @@ def crea_fogli_etichette(codici: list[dict], colonne: int = 3, righe: int = 4, c
             y_testo = y_immagine + immagine_codice.height + 5
             draw.text((x_testo, y_testo), testo, fill="black", font=font)
 
-        percorso_foglio = cartella / f"foglio_etichette_{timestamp}_{numero_pagina + 1}.png"
+        percorso_foglio = cartella / f"label_sheet_{timestamp}_{numero_pagina + 1}.png"
         foglio.save(percorso_foglio)
         percorsi_generati.append(percorso_foglio)
 

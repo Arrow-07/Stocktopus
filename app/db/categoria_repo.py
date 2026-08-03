@@ -9,7 +9,7 @@ def _valida_codice_categoria(connDB, codice: str | None, escludi_id: int | None 
 
     if not re.fullmatch(r"[A-Z]{2,5}", codice):
         raise ValueError(
-            f"Codice '{codice}' non valido: deve essere 2-5 lettere maiuscole (es. ELE, RES)."
+            f"Invalid code '{codice}': it must consist of 2-5 uppercase letters (e.g. ELE, RES)."
         )
 
     query = "SELECT id FROM categorie WHERE codice = ?"
@@ -19,7 +19,7 @@ def _valida_codice_categoria(connDB, codice: str | None, escludi_id: int | None 
         params.append(escludi_id)
 
     if connDB.execute(query, params).fetchone():
-        raise ValueError(f"Il codice '{codice}' è già usato da un'altra categoria.")
+        raise ValueError(f"Code '{codice}' is already used by another category.")
 
 def crea_categoria(nome: str, descrizione: str | None = None, id_genitore: int | None = None, colore: str | None = None, codice: str | None = None) -> int:
     """
@@ -200,12 +200,12 @@ def elimina_categorie(categoria_id: int, azione_figli: str | None = None) -> boo
 
         if _qualcuno_ha_oggetti(connDB, [categoria_id] + discendenti):
             raise Exception(
-                "La categoria (o una sua sotto-categoria) contiene oggetti e non può essere eliminata."
+                "The category (or one of its subcategories) contains items and cannot be deleted."
             )
 
         if discendenti and azione_figli not in ("elimina", "sposta"):
             raise Exception(
-                "La categoria contiene sotto-categorie. Specificare 'elimina' o 'sposta'."
+                "The category contains subcategories. Specify 'delete' or 'move'."
             )
 
         if azione_figli == "elimina":

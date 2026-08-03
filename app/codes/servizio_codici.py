@@ -27,7 +27,7 @@ def _genera_immagine(testo: str, tipo_codice: str) -> Path:
         return genera_qr(testo)
     elif tipo_codice == "barcode":
         return genera_barcode(testo)
-    raise ValueError("tipo_codice deve essere 'qr' o 'barcode'.")
+    raise ValueError("Invalid code type. It must be 'qr' or 'barcode'.")
 
 
 def _elimina_codice_e_immagine(riga_codice: dict | None) -> None:
@@ -70,12 +70,12 @@ def genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
     """
     if codice_repo.leggi_codice_oggetto(id_oggetto) is not None:
         raise Exception(
-            "Questo oggetto ha già un codice. Usa rigenera_codice_oggetto() se vuoi sostituirlo."
+            "This item already has a code. Use rigenera_codice_oggetto() if you want to replace it."
         )
 
     oggetto = oggetto_repo.leggi_oggetto(id_oggetto)
     if oggetto is None:
-        raise Exception("Oggetto non trovato.")
+        raise Exception("Item not found.")
 
     testo = oggetto["abbreviazione"]
     percorso = _genera_immagine(testo, tipo_codice)
@@ -98,12 +98,12 @@ def genera_codice_location(id_location: int, tipo_codice: str = "qr") -> dict:
     """
     if codice_repo.leggi_codice_location(id_location) is not None:
         raise Exception(
-            "Questa location ha già un codice. Usa rigenera_codice_location() se vuoi sostituirlo."
+            "This location already has a code. Use rigenera_codice_location() if you want to replace it."
         )
 
     location = location_repo.leggi_location(id_location)
     if location is None:
-        raise Exception("Location non trovata.")
+        raise Exception("Location not found")
 
     testo = location["abbreviazione"]
     percorso = _genera_immagine(testo, tipo_codice)
@@ -127,15 +127,15 @@ def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr", conferma: 
     """
     if not conferma:
         raise Exception(
-            "Operazione distruttiva: il codice attuale e la sua immagine verranno eliminati "
-            "permanentemente. Richiamare con conferma=True dopo l'avviso all'utente."
+            "Destructive operation: the current code and its image will be permanently deleted."
+            #Call this function again with confirm=True after warning the user.
         )
 
     _elimina_codice_e_immagine(codice_repo.leggi_codice_oggetto(id_oggetto))
 
     oggetto = oggetto_repo.leggi_oggetto(id_oggetto)
     if oggetto is None:
-        raise Exception("Oggetto non trovato.")
+        raise Exception("Item not found.")
 
     testo = oggetto["abbreviazione"]
     percorso = _genera_immagine(testo, tipo_codice)
@@ -159,15 +159,15 @@ def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma
     """
     if not conferma:
         raise Exception(
-            "Operazione distruttiva: il codice attuale e la sua immagine verranno eliminati "
-            "permanentemente. Richiamare con conferma=True dopo l'avviso all'utente."
+            "Destructive operation: the current code and its image will be permanently deleted."
+            #richiama con true dopo avviso utente
         )
 
     _elimina_codice_e_immagine(codice_repo.leggi_codice_location(id_location))
     
     location = location_repo.leggi_location(id_location)
     if location is None:
-        raise Exception("Location non trovata.")
+        raise Exception("Location not found.")
 
     testo = location["abbreviazione"]
     percorso = _genera_immagine(testo, tipo_codice)

@@ -15,7 +15,7 @@ def preleva_oggetto(id_oggetto: int, quantita: int, id_utente: int | None = None
         bool: True se il prelievo è stato effettuato e registrato con successo.
     """
     if quantita <= 0:
-        raise ValueError("QUANTITA NON VALIDA: La quantita deve essere > di 0.")
+        raise ValueError("Invalid quantity: the quantity must be greater than 0.")
 
     conn = ConnectDB()
     try:
@@ -24,12 +24,12 @@ def preleva_oggetto(id_oggetto: int, quantita: int, id_utente: int | None = None
         ).fetchone()
 
         if oggetto is None:
-            raise Exception("OGGETTO NON VALIDO: id oggetto non esistente")
+            raise Exception("Invalid item: item ID does not exist.")
         if oggetto["archiviato_il"] is not None:
-            raise Exception("OGGETTO NON VALIDO: un oggetto archiviato non puo essere spostato")
+            raise Exception("Invalid item: an archived item cannot be moved.")
         if oggetto["quantita"] < quantita:
             raise Exception(
-                f"QUANTITA NON VALIDA: disponibili {oggetto['quantita']}, richiesti {quantita}."
+                f"Invalid quantity: available {oggetto['quantita']}, requested {quantita}."
             )
 
         rimanenti = oggetto["quantita"] - quantita
@@ -61,7 +61,7 @@ def deposita_oggetto(id_oggetto: int, quantita: int, id_utente: int | None = Non
         bool: True se il deposito è stato effettuato e registrato con successo.
     """
     if quantita <= 0:
-        raise ValueError("QUANTITA NON VALIDA: La quantita deve essere > di 0.")
+        raise ValueError("Invalid quantity: the quantity must be greater than 0.")
 
     conn = ConnectDB()
     try:
@@ -70,9 +70,9 @@ def deposita_oggetto(id_oggetto: int, quantita: int, id_utente: int | None = Non
         ).fetchone()
 
         if oggetto is None:
-            raise Exception("OGGETTO NON VALIDO: id oggetto non esistente")
+            raise Exception("Invalid item: item ID does not exist.")
         if oggetto["archiviato_il"] is not None:
-            raise Exception("OGGETTO NON VALIDO: un oggetto archiviato non puo essere spostato")
+            raise Exception("Invalid item: an archived item cannot be moved.")
 
         nuova_quantita = oggetto["quantita"] + quantita
         conn.execute("UPDATE oggetto SET quantita = ? WHERE id = ?", (nuova_quantita, id_oggetto))
@@ -110,13 +110,13 @@ def trasferisci_oggetto(id_oggetto: int, nuova_location_id: int, id_utente: int 
         ).fetchone()
 
         if oggetto is None:
-            raise Exception("OGGETTO NON VALIDO: id oggetto non esistente")
+            raise Exception("Invalid item: item ID does not exist.")
         if oggetto["archiviato_il"] is not None:
-            raise Exception("OGGETTO NON VALIDO: un oggetto archiviato non puo essere spostato")
+            raise Exception("Invalid item: an archived item cannot be moved.")
 
         location_origine = oggetto["id_location"]
         if location_origine == nuova_location_id:
-            raise ValueError("La location di destinazione coincide con quella attuale.")
+            raise ValueError("Invalid location: The destination location is the same as the current location.")
 
         conn.execute("UPDATE oggetto SET id_location = ? WHERE id = ?", (nuova_location_id, id_oggetto))
         conn.execute(

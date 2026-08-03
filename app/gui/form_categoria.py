@@ -19,7 +19,7 @@ class FormCategoria(QDialog):
         layout.addRow("Name*:", self.campo_nome)
 
         self.campo_codice = QLineEdit()
-        self.campo_codice.setPlaceholderText("2–5 uppercase letters (e.g. ELE, optional)")
+        self.campo_codice.setPlaceholderText("2-5 uppercase letters (e.g. ELE, optional)")
         layout.addRow("Code:", self.campo_codice)
 
         self.colore = QColor("#2196F3")
