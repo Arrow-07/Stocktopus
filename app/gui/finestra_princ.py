@@ -11,6 +11,7 @@ from app.gui.form_oggetto import FormOggetto
 from app.gui.form_categoria import FormCategoria
 from app.gui.barra_ricerca import BarraRicerca
 from app.codes import servizio_codici, foglio_di_stampa
+from app.gui.finestra_dashboard import FinestraDashboard
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
@@ -52,7 +53,10 @@ class FinestraPrincipale(QMainWindow):
             lambda testo: QMessageBox.information(self, "No Resoult", f"No item or location find for '{testo}'.")
         )
         toolbar.addWidget(self.barra_ricerca)
-    
+
+        toolbar.addAction("⚠ Missing items", self._mostra_esauriti)
+        toolbar.addAction("📊 Statistics", self._apri_dashboard)
+
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
         form = FormLocation(self, id_genitore)
@@ -158,8 +162,19 @@ class FinestraPrincipale(QMainWindow):
         )
         layout.addWidget(self.checkbox_mostra_archiviati)
 
+        self.label_vuoto = QLabel()
+        pixmap_logo = QPixmap("app/assets/stocktopus-logo.png").scaled(
+            300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        self.label_vuoto.setPixmap(pixmap_logo)
+        self.label_vuoto.setAlignment(Qt.AlignCenter)
+
         self.tabella_oggetti = self._crea_tabella_oggetti()
+
+        layout.addWidget(self.label_vuoto)
         layout.addWidget(self.tabella_oggetti)
+        self.label_vuoto.setVisible(True)
+        self.tabella_oggetti.setVisible(False)
 
         return(contenitore)
 
@@ -571,6 +586,9 @@ class FinestraPrincipale(QMainWindow):
     def _popola_tabella(self, oggetti: list[dict]):
         """Riempie la tabella con una lista di oggetti già pronta — usata sia per
         il contenuto di una location, sia per risultati di ricerca non legati a una sola."""
+        self.label_vuoto.setVisible(not oggetti)
+        self.tabella_oggetti.setVisible(bool(oggetti))
+
         self.modello_oggetti.setRowCount(0)
         for oggetto in oggetti:
             item_nome = QStandardItem(oggetto["nome"])
@@ -660,3 +678,16 @@ class FinestraPrincipale(QMainWindow):
                 break
             corrente = location_repo.leggi_location(corrente["id_genitore"])
         return percorso    
+
+    def _mostra_esauriti(self):
+        self.id_location_corrente = None
+        self.albero_location.clearSelection()
+        oggetti = oggetto_repo.leggi_oggetti_esauriti()
+        self._popola_tabella(oggetti)
+
+    def _apri_dashboard(self):
+        self.finestra_dashboard = FinestraDashboard(self)
+        self.finestra_dashboard.show()
+        
+
+    

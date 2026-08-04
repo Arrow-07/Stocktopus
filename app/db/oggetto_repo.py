@@ -361,3 +361,17 @@ def leggi_oggetto_per_abbreviazione(abbreviazione: str) -> dict | None :
         return dict(riga) if riga else None
     finally:
         connDB.close()
+
+def leggi_oggetti_esauriti (include_archiviati: bool = False) -> list[dict]:
+    connDB = ConnectDB()
+
+    try:
+        query= "SELECT * FROM oggetto WHERE quantita = 0"
+        if not include_archiviati:
+            query += " AND archiviato_il IS NULL"
+
+        righe = connDB.execute(query).fetchall()
+        return [dict(r) for r in righe]
+    finally:
+        connDB.close()
+
