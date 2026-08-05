@@ -9,6 +9,7 @@ if __name__ == "__main__":
     InitDB()
 
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
     app.setWindowIcon(QIcon("app/assets/stocktopus.ico"))
     window = FinestraPrincipale()
     window.setWindowIcon(QIcon("app/assets/stocktopus.ico"))

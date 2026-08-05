@@ -1,0 +1,240 @@
+QMainWindow {
+    background-color: #1A1D24
+}
+
+QWidget {
+    color: #E2E8F0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+}
+
+/* caselle test */
+
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #2C3345;
+    border: 1px solid #3B445C;
+    border-radius: 8px;
+    color: #FFFFFF;
+    padding: 8px;
+    selection-background-color: #00ADB5
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #00ADB5;
+    background-color: #32394E;
+}
+
+/* menu a cascata */
+
+QComboBox {
+    background-color: #2C3345;
+    border: 1px solid #3B445C;
+    border-radius: 8px;
+    padding: 6px 12px;
+    min-width: 6em;
+}
+
+QComboBox:hover {
+    border-color: #00ADB5;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 25px;
+    border-left: 1px solid #3B445C;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #94A3B8; /* Triangolo nativo pulito */
+    width: 0px;
+    height: 0px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #222733;
+    border: 1px solid #3B445C;
+    selection-background-color: #00ADB5;
+    selection-color: #FFFFFF;
+    outline: 0;
+}
+
+/* Tool bar e menu*/
+
+QToolBar {
+    background-color: #222733;
+    border-bottom: 1px solid #2D3446;
+    padding: 6px;
+    spacing: 8px;
+}
+
+QToolBar QToolButton {
+    background-color: #2C3345;
+    color: #E2E8F0;
+    border: 1px solid #3B445C;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+QToolBar QToolButton:hover {
+    background-color: #00ADB5;
+    color: #FFFFFF;
+    border-color: #00ADB5;
+}
+
+/* QSplitter */
+
+QSplitter::handle{
+    background-color: #222733;
+    width: 2px;
+}
+
+/* Albero e tabella */
+
+QTreeView, QTableView {
+    background-color: #222733;
+    border: 1px solid #2D3446;
+    border-radius: 8px;
+    gridline-color: #2D3446;
+    outline: none;
+}
+
+QTreeView::item, QTable::item {
+    padding: 6px;
+    border-radius: 4px;
+}
+
+QTreeView::item:hover, QTable::item:hover {
+    background-color: #2C3345;
+}
+
+QTreeView::item:selected, QTableView::item:selected {
+    background-color: #00ADB5;
+    color: #FFFFFF;
+}
+
+QHeaderView::section {
+    background-color: #1A1D24;
+    color: #94A3B8;
+    padding: 8px;
+    border: none;
+    font-weight: bold;
+}
+
+/* input e spinbox */
+
+QSpinBox, QLineEdit {
+    background-color: #2C3345;
+    border: 1px solid #3B445C;
+    border-radius: 6px;
+    color: #FFFFFF;
+    padding: 5px 8px;
+}
+
+QSpinBox:focus, QLineEdit:focus {
+    border: 1px solid #00ADB5;
+}
+
+QSpinBox::up-button, QSpinBox::down-button {
+    background-color: #3B445C;
+    border-radius: 3px;
+    width: 18px;
+    margin: 1px;
+}
+
+QSpinBox::up-button:hover, QSpinBox::down-button:hover {
+    background-color: #00ADB5;
+}
+
+QSpinBox::up-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid #FFFFFF; /* Triangolo Verso l'alto */
+    width: 0px;
+    height: 0px;
+}
+
+QSpinBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #FFFFFF; /* Triangolo Verso il basso */
+    width: 0px;
+    height: 0px;
+}
+
+/* Bottoni */
+
+QPushButton {
+    background-color: #2C3345;
+    color: #E2E8F0;
+    border: 1px solid #3B445C;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #00ADB5;
+    color: #FFFFFF;
+    border-color: #00ADB5;
+}
+
+QPushButton:pressed {
+    background-color: #008891;
+    border-color: #008891;
+}
+
+/* Scrollbarr figa */
+
+QScrollBar:vertical {
+    background: #1A1D24;
+    width: 8px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical{
+    background: #3B445C;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #00ADB5;
+}
+
+/* Pannello */
+
+#PannelloDettaglio {
+    background-color: #222733;
+    border-left: 1px solid #2D3446;
+}
+
+QCheckBox {
+    spacing: 8px;
+    font-weight: 600;
+    color: #E2E8F0;
+    padding: 4px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #3B445C;
+    border-radius: 6px;
+    background-color: #2C3345;
+}
+
+QCheckBox::indicator:hover {
+    border-color: #00ADB5;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #00ADB5;
+    border-color: #00ADB5;
+    }
+

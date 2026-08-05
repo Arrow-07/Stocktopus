@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog
+QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog, QGridLayout
 )
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
@@ -17,7 +17,14 @@ class FinestraPrincipale(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Stocktopus")
-        self.resize(1100,700)
+        self.resize(1280,800)
+
+        PATH_QSS = Path(__file__).parent.parent / "assets" / "style_principale.qss"
+        if PATH_QSS.exists():
+            with open(PATH_QSS, "r", encoding="utf-8") as f:
+                self.setStyleSheet(f.read())
+        else:
+            print("fail load style")
 
         self._crea_toolbar()
 
@@ -33,7 +40,7 @@ class FinestraPrincipale(QMainWindow):
         self.pannello_dettaglio = self._crea_pannello_dettaglio()
         splitter.addWidget(self.pannello_dettaglio)
 
-        splitter.setSizes([250, 550, 300])
+        splitter.setSizes([260, 600, 420])
         self.setCentralWidget(splitter)
 
     def _crea_toolbar(self):
@@ -254,7 +261,9 @@ class FinestraPrincipale(QMainWindow):
         self.spin_quantita_movimento.setVisible(False)
         layout.addWidget(self.spin_quantita_movimento)
 
-        riga_bottoni = QHBoxLayout()
+        griglia_bottoni = QGridLayout()
+        griglia_bottoni.setSpacing(6)
+
         self.bottone_preleva = QPushButton("Retrieve Item")
         self.bottone_deposita = QPushButton("Store Item")
         self.bottone_modifica = QPushButton("Edit Item")
@@ -270,12 +279,12 @@ class FinestraPrincipale(QMainWindow):
         self.bottone_modifica.clicked.connect(self._on_modifica_cliccato)
         self.bottone_archivia_ripristina.clicked.connect(self._on_archivia_riprisina_cliccato)
         self.bottone_trasferisci.clicked.connect(self._on_trasferisci_cliccato)
-        riga_bottoni.addWidget(self.bottone_preleva)
-        riga_bottoni.addWidget(self.bottone_deposita)
-        riga_bottoni.addWidget(self.bottone_modifica)
-        riga_bottoni.addWidget(self.bottone_archivia_ripristina)
-        riga_bottoni.addWidget(self.bottone_trasferisci)
-        layout.addLayout(riga_bottoni)
+        griglia_bottoni.addWidget(self.bottone_preleva, 0, 0)
+        griglia_bottoni.addWidget(self.bottone_deposita, 0, 1)
+        griglia_bottoni.addWidget(self.bottone_modifica, 0, 2)
+        griglia_bottoni.addWidget(self.bottone_archivia_ripristina, 1, 0)
+        griglia_bottoni.addWidget(self.bottone_trasferisci, 1, 1, 1, 2)
+        layout.addLayout(griglia_bottoni)
 
         self.label_anteprima_codice = QLabel()
         self.label_anteprima_codice.setFixedSize(150,150)
@@ -688,6 +697,3 @@ class FinestraPrincipale(QMainWindow):
     def _apri_dashboard(self):
         self.finestra_dashboard = FinestraDashboard(self)
         self.finestra_dashboard.show()
-        
-
-    

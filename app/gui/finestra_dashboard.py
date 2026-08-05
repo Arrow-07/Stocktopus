@@ -51,7 +51,7 @@ class FinestraDashboard(QMainWindow):
 
         asse_X = plot.getAxis("bottom")
         asse_X.setTicks([[(i, nome) for i, nome in enumerate(nomi)]])
-        plot.getAxis("bottom").setStyle(tickTextAngle=45)
+        #plot.getAxis("bottom").setStyle(tickTextAngle=45)
         return plot
 
     def _crea_grafico_andamento(self) -> QWidget:
