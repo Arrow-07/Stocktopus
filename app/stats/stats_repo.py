@@ -59,9 +59,13 @@ def contatori_generali()-> dict:
     connDB = ConnectDB()
     try:
         oggetti = connDB.execute("SELECT COUNT(*) FROM oggetto WHERE archiviato_il IS NULL").fetchone()[0]
+        archiviati = connDB.execute("SELECT COUNT(*) FROM oggetto WHERE archiviato_il IS NOT NULL").fetchone()[0]
         location = connDB.execute("SELECT COUNT(*) FROM locations").fetchone()[0]
+        categorie = connDB.execute("SELECT COUNT(*) FROM categorie").fetchone()[0]
+        quantita_totale = connDB.execute("SELECT COALESCE(SUM(quantita), 0) FROM oggetto WHERE archiviato_il IS NULL").fetchone()[0]
         movimenti = connDB.execute("SELECT COUNT(*) FROM movimenti").fetchone()[0]
-        return {"oggetti" : oggetti, "location": location, "movimenti": movimenti}
+        return {"oggetti" : oggetti, "archiviati" : archiviati, "location": location,
+                "categorie" : categorie, "quantita_totale": quantita_totale, "movimenti": movimenti}
     finally:
         connDB.close()
 
