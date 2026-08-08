@@ -46,12 +46,9 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: none;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 6px solid #94A3B8; /* Triangolo nativo pulito */
-    width: 0px;
-    height: 0px;
+    image: url(app/assets/arrow_down.png); 
+    width: 12px;
+    height: 6px;
 }
 
 QComboBox QAbstractItemView {
@@ -151,21 +148,17 @@ QSpinBox::up-button:hover, QSpinBox::down-button:hover {
 }
 
 QSpinBox::up-arrow {
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 5px solid #FFFFFF; /* Triangolo Verso l'alto */
-    width: 0px;
-    height: 0px;
+    image: url(app/assets/spin_up.png);
+      
+    width: 10px;
+    height: 6px; 
 }
 
 QSpinBox::down-arrow {
-    image: none;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid #FFFFFF; /* Triangolo Verso il basso */
-    width: 0px;
-    height: 0px;
+    image: url(app/assets/spin_down.png);
+    
+    width: 10px;
+    height: 6px;
 }
 
 /* Bottoni */
@@ -190,7 +183,46 @@ QPushButton:pressed {
     border-color: #008891;
 }
 
-/* Scrollbarr figa */
+QPushButton#btnSave {
+    background-color: #1E3A2B;
+    color: #4e4e4e;
+    color: #2ECC71;
+    border: 1px solid #2ECC71;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+QPushButton#btnSave:hover {
+    background-color: #2ECC71;
+    color: #FFFFFF;
+    border-color: #27AE60;
+}
+
+QPushButton#btnSave:pressed {
+    background-color: #27AE60;
+}
+
+QPushButton#btnCancel {
+    background-color: #3A1E1E;
+    color: #E74C3C;
+    border: 1px solid #E74C3C;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+QPushButton#btnCancel:hover {
+    background-color: #E74C3C;
+    color: #FFFFFF;
+    border-color: #C0392B;
+}
+
+QPushButton#btnCancel:pressed {
+    background-color: #C0392B;
+}
+
+/* Scrollbarr */
 
 QScrollBar:vertical {
     background: #1A1D24;

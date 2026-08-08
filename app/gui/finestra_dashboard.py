@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QVBoxLayout,
     QWidget,
+    QListWidget,
+    QListWidgetItem
 )
 
 import pyqtgraph as pg
@@ -17,7 +19,7 @@ import pyqtgraph as pg
 from app.gui.widgets.card_grafico import CardGrafico
 from app.gui.widgets.card_kpi import CardKPI
 from app.stats import stats_repo
-
+from app.gui.widgets.grafico_torta import GraficoTorta
 
 class FinestraDashboard(QMainWindow):
 
@@ -30,6 +32,8 @@ class FinestraDashboard(QMainWindow):
         width = int(screen.width() * 0.85)
         height = int(screen.height() * 0.85)
         self.resize(width, height)
+
+        self.showMaximized()
 
         contenuto = QWidget()
         layout = QVBoxLayout(contenuto)
@@ -117,7 +121,13 @@ class FinestraDashboard(QMainWindow):
         layout.addLayout(riga_grafici_2)
 
         # --- SEZIONE MODULI FUTURI ---
-        layout.addWidget(self._crea_box_moduli_futuri())
+        riga_grafici_3 = QGridLayout()
+        riga_grafici_3.setSpacing(14)
+        riga_grafici_3.addWidget(CardGrafico(self._grafico_torta_movimenti()), 0, 0)
+        riga_grafici_3.addWidget(CardGrafico(self._lista_attivita_recenti()), 0, 1)
+        layout.addLayout(riga_grafici_3)
+
+        layout.addWidget(self._crea_box_insights())
 
         layout.addStretch()
 
@@ -171,6 +181,7 @@ class FinestraDashboard(QMainWindow):
     ):
         plot = pg.PlotWidget()
         plot.setBackground("#222733")
+        plot.setMinimumHeight(300)
         plot.setTitle(titolo, color="#FFFFFF", size="11pt", bold=True)
         plot.showGrid(x=False, y=True, alpha=0.15)
 
@@ -216,6 +227,7 @@ class FinestraDashboard(QMainWindow):
         dati = stats_repo.andamento_movimenti(30)
         plot = pg.PlotWidget()
         plot.setBackground("#222733")
+        plot.setMinimumHeight(300)
         plot.setTitle(
             "Movement Trends (30 Days)", color="#FFFFFF", size="11pt", bold=True
         )
@@ -253,21 +265,106 @@ class FinestraDashboard(QMainWindow):
 
         return plot
 
-    def _crea_box_moduli_futuri(self):
-        box = QFrame()
-        box.setStyleSheet("""
-            QFrame {
-                background-color: #222733;
-                border: 1px dashed #3B445C;
-                border-radius: 10px;
-                padding: 8px;
+    def _grafico_torta_movimenti(self):
+        colori = {
+            "prelevio": "#00ADB5",
+            "prelievo": "#00ADB5",
+            "deposito": "#4CAF50",
+            "trasferimento": "#3A9DF8",
+        }
+        dati = stats_repo.distribuzione_tipi_movimento()
+        dati_grafico = [(d["tipo_movimento"], d["totale"], colori.get(d["tipo_movimento"])) for d in dati]
+
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        titolo = QLabel("Movements Distribution")
+        titolo.setStyleSheet("color: #FFFFFF; font-size: 11pt; font-weight: bold; margin-bottom: 4px;")
+        layout.addWidget(titolo)
+
+        torta =  GraficoTorta(dati_grafico)
+        layout.addWidget(torta)
+
+        return box
+
+    def _lista_attivita_recenti(self):
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        titolo = QLabel("Recent Activity")
+        titolo.setStyleSheet("font-size: 11pt; font-weight: bold; margin-bottom: 4px;")
+        layout.addWidget(titolo)
+
+        lista = QListWidget()
+        lista.setFocusPolicy(Qt.NoFocus)
+        lista.setSelectionMode(QListWidget.NoSelection)
+
+        lista.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        lista.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        lista.setStyleSheet("""
+            QListWidget {
+                background: transparent;
+                border: none;
+                outline: none;
+            }
+            QListWidget::item {
+                color: #E2E8F0;
+                padding: 6px 8px;
+                border-bottom: 1px solid #2D3342;
+                font-size: 10pt;
+            }
+            QListWidget::item:hover {
+                background-color: #2A303D;
+                border-radius: 4px;
             }
         """)
-        layout_box = QHBoxLayout(box)
-        lbl = QLabel(
-            "💡 Future Modules Area: Low Stock Items • Recent Activity • Movement"
-            " Types (Pie Chart) • Automatic Insights"
-        )
-        lbl.setStyleSheet("color: #64748B; font-size: 9.5pt; font-style: italic;")
-        layout_box.addWidget(lbl)
+
+        icone = {"prelievo": "🟢", "deposito": "🔵", "trasferimento": "🟡"}
+        for riga in stats_repo.attivita_recenti(10):
+            icona = icone.get(riga["tipo_movimento"], "⚪")
+            testo = f"{icona} {riga['tipo_movimento'].capitalize()} - {riga['nome_oggetto'] or '(deleted item)'}"
+            item = QListWidgetItem(testo)
+            lista.addItem(item)
+
+        layout.addWidget(lista)
         return box
+
+    def _crea_box_insights(self):
+        box = QFrame()
+        box.setObjectName("CardInsights")
+        box.setStyleSheet("""
+            QFrame#CardInsights {
+                background-color: #222733;
+                border-radius: 12px;
+            }
+        """)
+        layout_box = QVBoxLayout(box)
+        layout_box.setContentsMargins(16, 16, 16, 16)
+        layout_box.setSpacing(10)
+        
+        titolo = QLabel("💡 Insights & Analytics")
+        titolo.setStyleSheet("color: #FFFFFF; font-weight: bold; font-size: 11pt; margin-bottom: 4px;")
+        layout_box.addWidget(titolo)
+
+        for testo in stats_repo.genera_insights():
+            item_frame = QFrame()
+            item_frame.setStyleSheet("""
+                QFrame {
+                    background-color: #1A1D24;
+                    border: 1px solid #2D3342;
+                    border-radius: 8px;
+                }
+            """)
+            item_layout = QHBoxLayout(item_frame)
+            item_layout.setContentsMargins(12, 8, 12, 8)
+
+            lbl = QLabel(testo)
+            lbl.setStyleSheet("color: #E2E8F0; font-size: 10pt; border: none; background: transparent;")
+            item_layout.addWidget(lbl)
+
+            layout_box.addWidget(item_frame)
+        return box
+    

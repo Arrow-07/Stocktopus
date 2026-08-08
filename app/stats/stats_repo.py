@@ -69,4 +69,72 @@ def contatori_generali()-> dict:
     finally:
         connDB.close()
 
+def distribuzione_tipi_movimento() -> list[dict]:
+    connDB = ConnectDB()
+    try:
+        righe = connDB.execute(
+            "SELECT tipo_movimento, COUNT(*) AS totale FROM movimenti GROUP BY tipo_movimento"
+        ).fetchall()
+        return [dict(r) for r in righe]
+    finally:
+        connDB.close()
+
+def attivita_recenti(limite: int = 10) -> list[dict]:
+    connDB = ConnectDB()
+
+    try:
+        righe = connDB.execute(
+            "SELECT movimenti.tipo_movimento, movimenti.data_movimento, "
+            "oggetto.nome AS nome_oggetto FROM movimenti "
+            "LEFT JOIN oggetto ON oggetto.id = movimenti.id_oggetto "
+            "ORDER BY movimenti.data_movimento DESC LIMIT ?",
+            (limite,)
+        ).fetchall()
+
+        return [dict(r) for r in righe]
+
+    finally:
+        connDB.close()
+
+def genera_insights() -> list[str]:
+    connDB = ConnectDB()
+
+    try:
+        insights = []
+        totale_mov = connDB.execute("SELECT COUNT(*) FROM movimenti").fetchone()[0]
+        top3 = connDB.execute(
+            "SELECT COUNT(*) c FROM movimenti GROUP BY id_oggetto ORDER BY c DESC LIMIT 3"
+        ).fetchall()
+        if totale_mov and top3:
+            perc = round(100 * sum(r["c"] for r in top3) / totale_mov)
+            insights.append(f"📌 3 items account for {perc}% of all movements.")
+
+        cat = connDB.execute(
+            "SELECT categorie.nome, COUNT(*) c FROM oggetto "
+            "JOIN categorie ON categorie.id = oggetto.id_categoria "
+            "WHERE oggetto.archiviato_il IS NULL GROUP BY categorie.id ORDER BY c DESC LIMIT 1"
+        ).fetchone()
+
+        if cat:
+            insights.append(f"🏷 '{cat['nome']}' is the largest category.")
+
+        loc = connDB.execute(
+            "SELECT locations.nome, SUM(oggetto.quantita) tot FROM oggetto "
+            "JOIN locations ON locations.id = oggetto.id_location "
+            "WHERE oggetto.archiviato_il IS NULL GROUP BY locations.id ORDER BY tot DESC LIMIT 1"
+        ).fetchone()
+
+        totale_q = connDB.execute(
+            "SELECT COALESCE(SUM(quantita), 0) FROM oggetto WHERE archiviato_il IS NULL"
+        ).fetchone()[0]
+
+        if loc and totale_q:
+            insights.append(f"📍 '{loc['nome']}' contains {round(100*loc['tot']/totale_q)}% of the inventory.")
+
+        return insights
+
+    finally:
+        connDB.close()
+
+
 

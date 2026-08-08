@@ -18,6 +18,7 @@ class FinestraPrincipale(QMainWindow):
         super().__init__()
         self.setWindowTitle("Stocktopus")
         self.resize(1280,800)
+        self.showMaximized()
 
         PATH_QSS = Path(__file__).parent.parent / "assets" / "style_principale.qss"
         if PATH_QSS.exists():

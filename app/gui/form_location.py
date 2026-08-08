@@ -35,6 +35,8 @@ class FormLocation(QDialog):
         riga_bottoni = QHBoxLayout()
         bottone_salva = QPushButton("Save")
         bottone_annulla = QPushButton("Cancel")
+        bottone_salva.setObjectName("btnSave")
+        bottone_annulla.setObjectName("btnCancel")
         bottone_salva.clicked.connect(self._on_salva)
         bottone_annulla.clicked.connect(self.reject)
         riga_bottoni.addWidget(bottone_salva)
