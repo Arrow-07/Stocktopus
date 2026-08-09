@@ -11,9 +11,9 @@ class FormLocation(QDialog):
     nell' albero al momento dell' apertura del form).
     """
 
-    def __init__(self, parent = None, id_genitore_preselezionato: int | None = None):
+    def __init__(self, parent = None, id_genitore_preselezionato: int | None = None, id_location = None):
         super().__init__(parent)
-        self.setWindowTitle("Create new Location")
+        self.setWindowTitle("Edit location" if id_location else "Create new Location")
         self.setMinimumWidth(350)
 
         layout = QFormLayout(self)
@@ -43,6 +43,9 @@ class FormLocation(QDialog):
         riga_bottoni.addWidget(bottone_annulla)
         layout.addRow(riga_bottoni)
 
+        if id_location:
+            self._precompila(id_location)
+
     def _popola_combo_genitore(self, id_preselezionato: int | None):
         self.combo_genitore.addItem("-- None (Root Level) --", None)
         indice_da_selezionare = 0
@@ -65,6 +68,14 @@ class FormLocation(QDialog):
             risultato.extend(self._elenco_flat(location["id"], profondita+1))
         return risultato
 
+    def _precompila(self, id_location):
+        loc = location_repo.leggi_location(id_location)
+        self.campo_nome.setText(loc["nome"])
+        self.campo_tipo.setText(loc["tipo"])
+        self.campo_descrizione.setText(loc["descrizione"] or "")
+        if loc["id_genitore"]:
+            idx = self.combo_genitore.setCurrentIndex(idx)
+
     def _on_salva(self):
         nome = self.campo_nome.text().strip()
         tipo = self.campo_tipo.text().strip()
@@ -80,7 +91,10 @@ class FormLocation(QDialog):
         id_genitore = self.combo_genitore.currentData()
 
         try:
-            location_repo.crea_location(nome, tipo, descrizione, id_genitore)
+            if self.id_location:
+                location_repo.aggiorna_location(self.id_location, nome=nome, tipo=tipo, descrizione=descrizione, id_genitore=id_genitore)
+            else:
+                location_repo.crea_location(nome, tipo, descrizione, id_genitore)
         except Exception as errore:
             QMessageBox.critical(self, "Error while SAVING", str(errore))
             return

@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QComboBox, QSpinBox, QTextEdit, QPushButton, QHBoxLayout, QMessageBox, QFileDialog
 )
 from app.db import oggetto_repo, categoria_repo, location_repo
+from app.logic import suggerimenti
 
 class FormOggetto(QDialog):
     """
@@ -37,6 +38,14 @@ class FormOggetto(QDialog):
         self._popola_combo_location(id_location_preselezionata)
         layout.addRow("Location:", self.combo_location)
 
+        self.combo_categoria.currentIndexChanged.connect(self._aggiorna_suggerimento)
+        self._id_location_suggerita = None
+
+        self.bottone_suggerimento = QPushButton()
+        self.bottone_suggerimento.setVisible(False)
+        self.bottone_suggerimento.clicked.connect(self._applica_suggerimento)
+        layout.addRow("", self.bottone_suggerimento)
+        
         self.campo_quantita = QSpinBox()
         self.campo_quantita.setRange(0, 999999)
         layout.addRow("Quantity:", self.campo_quantita)
@@ -142,6 +151,23 @@ class FormOggetto(QDialog):
         destinazione = CARTELLA_IMMAGINI / nome_univoco
         shutil.copy(precorso, destinazione)
         self.campo_immagine_path.setText(str(destinazione))
+
+    def _aggiorna_suggerimento(self):
+        id_cat = self.combo_categoria.currentData()
+        trovati = suggerimenti.suggerisci_locations(id_cat)
+        if trovati:
+            migliore = trovati[0]
+            self._id_location_suggerita  = migliore["id"]
+            self.bottone_suggerimento.setText(f"🔎 Best match: {migliore['nome']}")
+            self.bottone_suggerimento.setVisible(True)
+        else:
+            self.bottone_suggerimento.setVisible(False)
+
+    def _applica_suggerimento(self):
+        indice = self.combo_location.findData(self._id_location_suggerita)
+        if indice >= 0:
+            self.combo_location.setCurrentIndex(indice)
+            
 
     def _on_salva(self):
         nome = self.campo_nome.text().strip()

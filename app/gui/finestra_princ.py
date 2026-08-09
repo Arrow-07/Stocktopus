@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog, QGridLayout
+QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog, QGridLayout, QMenu
 )
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
@@ -101,6 +101,9 @@ class FinestraPrincipale(QMainWindow):
         albero = QTreeView()
         albero.setHeaderHidden(True)
 
+        albero.setContextMenuPolicy(Qt.CustomContextMenu)
+        albero.customContextMenuRequested.connect(self._menu_contestuale_location)
+
         self.modello_location = QStandardItemModel()
         self._popola_nodo_radice(self.modello_location)
         albero.setModel(self.modello_location)
@@ -110,6 +113,57 @@ class FinestraPrincipale(QMainWindow):
 
         albero.resizeColumnToContents(0)
         return albero
+
+    def _menu_contestuale_location(self, pos):
+        index = self.albero_location.indexAt(pos)
+        if not index.isValid():
+            return
+        item = self.modello_location.itemFromIndex(index)
+        id_location = item.data(Qt.UserRole)
+        if id_location is None:
+            return
+        menu = QMenu(self)
+        menu.addAction("Edit", lambda: self._apri_form_modifica_location(id_location))
+        menu.addAction("Delete", lambda: self._gestisci_eliminazione_location(id_location))
+        menu.addSeparator()
+        menu.addAction("New Item here", lambda: FormOggetto(self, id_location).exec() and self._aggiorna_tabella_oggetti(id_location))
+        menu.addAction("New sub-location", lambda: self._apri_form_nuova_location_con_genitore(id_location))
+        menu.exec(self.albero_location.viewport().mapToGlobal(pos))
+
+    def _apri_form_modifica_location(self, id_location):
+        form = FormLocation(self, id_location=id_location)
+        if form.exec():
+            self._ricarica_albero_location()
+
+    def _apri_form_nuova_location_con_genitore(self, id_genitore):
+        form = FormLocation(self, id_genitore_preselezionato=id_genitore)
+
+        if form.exec():
+            self._ricarica_albero_location()
+
+    def _gestisci_eliminazione_location(self, id_location):
+        try:
+            location_repo.elimina_location(id_location)
+        except Exception as errore:
+            msg = str(errore)
+
+            if "sub-locations" not in msg:
+                QMessageBox.critical(self, "Error", msg)
+                return
+            box = QMessageBox(self)
+            box.setText(msg)
+            b_elimina = box.addButton("Delete all", QMessageBox.AcceptRole)
+            b_elimina.setObjectName("btnCancel")
+            b_sposta = box.addButton("Move sub-locations item", QMessageBox.ActionRole)
+            box.addButton("Cancel", QMessageBox.RejectRole)
+            box.exec()
+            if box.clickedButton() == b_elimina:
+                location_repo.elimina_location(id_location, azione_figli="elimina")
+            elif box.clickedButton() == b_sposta:
+                location_repo.elimina_location(id_location, azione_figli="sposta")
+            else:
+                return
+        self._ricarica_albero_location()
 
     def _popola_nodo_radice(self, modello: QStandardItemModel):
         """
