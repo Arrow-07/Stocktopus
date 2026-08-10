@@ -8,9 +8,11 @@ from app.db import categoria_repo
 class FormCategoria(QDialog):
     """form di creazione per uuna nuova categoria. id_genitore_preselezionato, se fornito, viene proposto come genitore di defoult"""
 
-    def __init__ (self, parent = None, id_genitore_preselezionato: int | None = None):
+    def __init__ (self, parent = None, id_genitore_preselezionato: int | None = None, id_categoria=None):
         super().__init__(parent)
-        self.setWindowTitle("New Category")
+        self.id_categoria = id_categoria
+
+        self.setWindowTitle("Edit Category" if id_categoria else "New Category")
         self.setMinimumWidth(350)
 
         layout = QFormLayout(self)
@@ -48,6 +50,9 @@ class FormCategoria(QDialog):
         riga_bottoni.addWidget(bottone_salva)
         riga_bottoni.addWidget(bottone_annulla)
         layout.addRow(riga_bottoni)
+
+        if id_categoria:
+            self._precompila(id_categoria)
 
     def _popola_combo_genitore(self, id_preselezionato : int | None):
         self.combo_genitore.addItem("-- None (Root Level) --")
@@ -87,6 +92,20 @@ class FormCategoria(QDialog):
 
         self.campo_colore.setText(self.colore.name())
 
+    def _precompila(self, id_categoria):
+        cat = categoria_repo.leggi_categoria(id_categoria)
+        self.campo_nome.setText(cat["nome"])
+        self.campo_codice.setText(cat["codice"] or "")
+        if cat["colore"]:
+            self.colore = QColor(cat["colore"])
+            self._aggiorna_bottone_colore()
+        self.campo_descrizione.setText(cat["descrizione"] or "")
+        if cat["id_genitore"]:
+            idx = self.combo_genitore.findData(cat["id_genitore"])
+            if idx >=0:
+                self.combo_genitore.setCurrentIndex(idx)
+            
+
     def _on_salva(self):
         nome = self.campo_nome.text().strip()
 
@@ -100,7 +119,11 @@ class FormCategoria(QDialog):
         id_genitore = self.combo_genitore.currentData()
 
         try : 
-            categoria_repo.crea_categoria(nome, descrizione, id_genitore, colore, codice)
+            if self.id_categoria:
+                categoria_repo.aggiorna_categoria(self.id_categoria, nome=nome, descrizione=descrizione, colore=colore, codice=codice)
+            else:
+                categoria_repo.crea_categoria(nome, descrizione, id_genitore, colore, codice)
+                
         except ValueError as errore:
             QMessageBox.warning(self, "Code not valid", str(errore))
             return

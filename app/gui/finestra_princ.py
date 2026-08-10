@@ -12,6 +12,7 @@ from app.gui.form_categoria import FormCategoria
 from app.gui.barra_ricerca import BarraRicerca
 from app.codes import servizio_codici, foglio_di_stampa
 from app.gui.finestra_dashboard import FinestraDashboard
+from app.gui.finestra_categorie import FinestraCategorie
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
@@ -45,13 +46,14 @@ class FinestraPrincipale(QMainWindow):
         self.setCentralWidget(splitter)
 
     def _crea_toolbar(self):
-        toolbar = self.addToolBar("Action")
+        self._crea_menu()
+
+
+        toolbar = self.addToolBar("Ricerca")
         toolbar.addAction("+ New location", self._apri_form_nuova_location)
         toolbar.addAction("+ New category", self._apri_form_categoria)
         toolbar.addAction("+ New item", self._apri_form_nuovo_oggetto)
-        toolbar.addAction("Print Location Codes", self._apri_stampa_location)
-        toolbar.addAction("Print Category Codes", self._apri_stampa_categoria)
-
+        
         self.barra_ricerca = BarraRicerca()
         self.barra_ricerca.location_trovata.connect(lambda loc: self._seleziona_location_in_albero(loc["id"]))
         self.barra_ricerca.location_multipla.connect(self._mostra_location_multiple)
@@ -64,6 +66,21 @@ class FinestraPrincipale(QMainWindow):
 
         toolbar.addAction("⚠ Missing items", self._mostra_esauriti)
         toolbar.addAction("📊 Statistics", self._apri_dashboard)
+
+    def _crea_menu(self):
+        menu_file = self.menuBar().addMenu("Inventory")
+
+        menu_file.addAction("New Item", self._apri_form_nuovo_oggetto)
+        menu_file.addAction("New Location", self._apri_form_nuova_location)
+        menu_file.addAction("Manage Category", lambda: FinestraCategorie(self).exec())
+        
+        menu_vai = self.menuBar().addMenu("Filter")
+        menu_vai.addAction("⚠ Missing items", self._mostra_esauriti)
+
+        menu_report = self.menuBar().addMenu("Code")
+        menu_report.addAction("Print Location Codes", self._apri_stampa_location)
+        menu_report.addAction("Print Category Codes", self._apri_stampa_categoria)
+
 
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
