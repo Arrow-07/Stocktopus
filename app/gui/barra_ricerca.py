@@ -17,7 +17,7 @@ class BarraRicerca(QLineEdit):
 
     def  __init__(self, parent=None):
         super().__init__(parent)
-        self.setPlaceholderText("Shearch or scan a code...")
+        self.setPlaceholderText("Search or scan a code...")
         self.setMaximumWidth(300)
         self.setClearButtonEnabled(True)
         self.includi_archiviati = False

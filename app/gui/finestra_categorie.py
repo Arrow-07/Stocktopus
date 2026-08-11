@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt
 from app.db import categoria_repo
+from app.db.categoria_repo import CategoriaHasChildrenError, CategoriaHasItemsError
 from app.gui.form_categoria import FormCategoria
 
 class FinestraCategorie(QDialog):
@@ -58,22 +59,33 @@ class FinestraCategorie(QDialog):
         id_cat = item.data(Qt.UserRole)
         try:
             categoria_repo.elimina_categorie(id_cat)
+            self._ricarica()
+            return
+        except CategoriaHasItemsError as errore:
+            QMessageBox.critical(self, "Cannot Delete", str(errore))
+            return
+        except CategoriaHasChildrenError:
+            pass
         except Exception as errore:
-            msg = str(errore)
-            if "sub-category" not in msg:
-                QMessageBox.critical(self, "Error", msg)
-                return
-            box = QMessageBox(self)
-            box.setText(msg)
-            b_elimina = box.addButton("Delete All", QMessageBox.AcceptRole)
-            b_sposta = box.addButton("Move sub up", QMessageBox.ActionRole)
-            box.addButton("Cancel", QMessageBox.RejectRole)
-            box.exec()
+            QMessageBox.critical(self, "Error", str(errore))
+            return
+        
+        box = QMessageBox(self)
+        box.setText("This category contains sub-categories. What do you want to do?")
+        b_elimina = box.addButton("Delete All", QMessageBox.AcceptRole)
+        #b_elimina.setObjectName("btnCancel")
+        b_sposta = box.addButton("Move children up", QMessageBox.ActionRole)
+        box.addButton("Cancel", QMessageBox.RejectRole)
+        box.exec()
+
+        try:
             if box.clickedButton() == b_elimina:
                 categoria_repo.elimina_categorie(id_cat, azione_figli="elimina")
             elif box.clickedButton() == b_sposta:
                 categoria_repo.elimina_categorie(id_cat, azione_figli="sposta")
             else:
                 return
-
+        except CategoriaHasChildrenError as errore:
+            QMessageBox.critical(self, "Cannot delete", str(errore))
+            return
         self._ricarica()

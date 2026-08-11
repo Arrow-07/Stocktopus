@@ -8,6 +8,8 @@ QWidget {
     font-size: 10pt;
 }
 
+
+
 /* caselle test */
 
 QLineEdit, QTextEdit, QPlainTextEdit {
@@ -81,6 +83,12 @@ QToolBar QToolButton:hover {
     background-color: #00ADB5;
     color: #FFFFFF;
     border-color: #00ADB5;
+}
+
+QToolBar::separator {
+    height: 1px;
+    background-color: #2D3342;
+    margin: 4px 8px;
 }
 
 /* QSplitter */
@@ -271,3 +279,49 @@ QCheckBox::indicator:checked {
     image: url(app/assets/check_x.png);
     }
 
+/* MENU */
+
+QMenuBar {
+    background-color: #1A1D24;
+    color: #E2E8F0;
+    font-size: 10pt;
+    font-weight: 500;
+    border-bottom: 1px solid #2D3446;
+    padding: 2px 4px;
+}
+
+QMenuBar::item {
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected, QMenuBar::item:pressed {
+    background-color: #2A303D;
+    color: #FFFFFF;
+}
+
+QMenu {
+    background-color: #222733;
+    color: #E2E8F0;
+    border: 1px solid #2D3342;
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 9.5pt;
+}
+
+QMenu::item {
+    padding: 6px 24px 6px 12px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background-color: #00ADB5;
+    color: #FFFFFF;
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: #2D3342;
+    margin: 4px 8px;
+}

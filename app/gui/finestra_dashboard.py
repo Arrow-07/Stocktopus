@@ -195,7 +195,6 @@ class FinestraDashboard(QMainWindow):
         valori = [d[chiave_valore] for d in dati]
         x = list(range(len(nomi)))
 
-        # Aumentiamo l'asse Y del 35% per evitare che i numeri sopra la barra più alta vengano tagliati
         max_val = max(valori) if valori and max(valori) > 0 else 1
         plot.setYRange(0, max_val * 1.35)
 

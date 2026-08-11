@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import (
-QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog, QGridLayout, QMenu
+QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout, QLabel, QHeaderView, QPushButton, QSpinBox, QMessageBox, QScrollArea, QCheckBox, QFileDialog, QInputDialog, QGridLayout, QMenu, QSizePolicy, QFrame
 )
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
 from PySide6.QtCore import Qt
 from pathlib import Path
 from app.db import location_repo, oggetto_repo, movimenti_repo, categoria_repo, codice_repo
+from app.db.location_repo import LocationHasChildrenError, LocationHasItemsError
 from app.gui.form_location import FormLocation
 from app.gui.form_oggetto import FormOggetto
 from app.gui.form_categoria import FormCategoria
@@ -50,10 +51,16 @@ class FinestraPrincipale(QMainWindow):
 
 
         toolbar = self.addToolBar("Ricerca")
+        toolbar.addAction("+ New item", self._apri_form_nuovo_oggetto)
         toolbar.addAction("+ New location", self._apri_form_nuova_location)
         toolbar.addAction("+ New category", self._apri_form_categoria)
-        toolbar.addAction("+ New item", self._apri_form_nuovo_oggetto)
-        
+        toolbar.addAction("⚠ Missing items", self._mostra_esauriti)
+        toolbar.addAction("📊 Statistics", self._apri_dashboard)
+
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        toolbar.addWidget(spacer)
+
         self.barra_ricerca = BarraRicerca()
         self.barra_ricerca.location_trovata.connect(lambda loc: self._seleziona_location_in_albero(loc["id"]))
         self.barra_ricerca.location_multipla.connect(self._mostra_location_multiple)
@@ -64,23 +71,20 @@ class FinestraPrincipale(QMainWindow):
         )
         toolbar.addWidget(self.barra_ricerca)
 
-        toolbar.addAction("⚠ Missing items", self._mostra_esauriti)
-        toolbar.addAction("📊 Statistics", self._apri_dashboard)
-
     def _crea_menu(self):
         menu_file = self.menuBar().addMenu("Inventory")
 
         menu_file.addAction("New Item", self._apri_form_nuovo_oggetto)
         menu_file.addAction("New Location", self._apri_form_nuova_location)
-        menu_file.addAction("Manage Category", lambda: FinestraCategorie(self).exec())
+        menu_file.addSeparator()
+        menu_file.addAction("Manage Categories...", lambda: FinestraCategorie(self).exec())
         
-        menu_vai = self.menuBar().addMenu("Filter")
+        menu_vai = self.menuBar().addMenu("Go To")
         menu_vai.addAction("⚠ Missing items", self._mostra_esauriti)
 
-        menu_report = self.menuBar().addMenu("Code")
+        menu_report = self.menuBar().addMenu("Codes")
         menu_report.addAction("Print Location Codes", self._apri_stampa_location)
         menu_report.addAction("Print Category Codes", self._apri_stampa_categoria)
-
 
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
@@ -161,25 +165,35 @@ class FinestraPrincipale(QMainWindow):
     def _gestisci_eliminazione_location(self, id_location):
         try:
             location_repo.elimina_location(id_location)
+            self._ricarica_albero_location()
+            return
+        except LocationHasItemsError as errore:
+            QMessageBox.critical(self, "Cannot Delete", str(errore))
+            return
+        except LocationHasChildrenError:
+            pass
         except Exception as errore:
-            msg = str(errore)
+            QMessageBox.critical(self, "Error", str(errore))
+            return
+        
+        box = QMessageBox(self)
+        box.setText("This location contains sub-locations. What do you want to do?")
+        b_elimina = box.addButton("Delete all", QMessageBox.AcceptRole)
+        b_elimina.setObjectName("btnCancel")
+        b_sposta = box.addButton("Move children up", QMessageBox.ActionRole)
+        box.addButton("Cancel", QMessageBox.RejectRole)
+        box.exec()
 
-            if "sub-locations" not in msg:
-                QMessageBox.critical(self, "Error", msg)
-                return
-            box = QMessageBox(self)
-            box.setText(msg)
-            b_elimina = box.addButton("Delete all", QMessageBox.AcceptRole)
-            b_elimina.setObjectName("btnCancel")
-            b_sposta = box.addButton("Move sub-locations item", QMessageBox.ActionRole)
-            box.addButton("Cancel", QMessageBox.RejectRole)
-            box.exec()
+        try:
             if box.clickedButton() == b_elimina:
                 location_repo.elimina_location(id_location, azione_figli="elimina")
             elif box.clickedButton() == b_sposta:
                 location_repo.elimina_location(id_location, azione_figli="sposta")
             else:
                 return
+        except LocationHasChildrenError as errore:
+            QMessageBox.critical(self, "Cannot delete", str(errore))
+            return
         self._ricarica_albero_location()
 
     def _popola_nodo_radice(self, modello: QStandardItemModel):
@@ -234,25 +248,44 @@ class FinestraPrincipale(QMainWindow):
         layout = QVBoxLayout(contenitore)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.checkbox_mostra_archiviati = QCheckBox("Show Archivied item")
+        self.checkbox_mostra_archiviati = QCheckBox("Show archived items")
         self.checkbox_mostra_archiviati.stateChanged.connect(self._on_toggle_archiviati)
         self.checkbox_mostra_archiviati.stateChanged.connect(
             lambda: self.barra_ricerca.imposta_includi_archiviati(self.checkbox_mostra_archiviati.isChecked())
         )
         layout.addWidget(self.checkbox_mostra_archiviati)
 
-        self.label_vuoto = QLabel()
+        self.container_vuoto = QWidget()
+        layout_vuoto = QVBoxLayout(self.container_vuoto)
+        layout_vuoto.setAlignment(Qt.AlignCenter)
+        layout_vuoto.setSpacing(12)
+
+
+        label_imm = QLabel()
         pixmap_logo = QPixmap("app/assets/stocktopus-logo.png").scaled(
             300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
-        self.label_vuoto.setPixmap(pixmap_logo)
-        self.label_vuoto.setAlignment(Qt.AlignCenter)
+        label_imm.setPixmap(pixmap_logo)
+        label_imm.setAlignment(Qt.AlignCenter)
+
+        label_txt = QLabel(
+            "Select a location from the left tree to view its items"
+        )
+        label_txt.setAlignment(Qt.AlignCenter)
+        label_txt.setStyleSheet("""
+            color: #94A3B8; 
+            font-size: 11pt; 
+            font-weight: 500;
+        """)
+
+        layout_vuoto.addWidget(label_imm)
+        layout_vuoto.addWidget(label_txt)
 
         self.tabella_oggetti = self._crea_tabella_oggetti()
 
-        layout.addWidget(self.label_vuoto)
+        layout.addWidget(self.container_vuoto)
         layout.addWidget(self.tabella_oggetti)
-        self.label_vuoto.setVisible(True)
+        self.container_vuoto.setVisible(True)
         self.tabella_oggetti.setVisible(False)
 
         return(contenitore)
@@ -290,14 +323,60 @@ class FinestraPrincipale(QMainWindow):
     def _crea_pannello_dettaglio(self) -> QWidget:
         contenuto = QWidget()
         layout = QVBoxLayout(contenuto)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(12)
 
-        self.label_nessuna_selezione = QLabel("Select an item to view more details.")
+        self.label_nessuna_selezione = QLabel("📦\n\nNo item Selected\nSelect an item from the table to view its details")
+        self.label_nessuna_selezione.setAlignment(Qt.AlignCenter)
+        self.label_nessuna_selezione.setStyleSheet("""
+            QLabel {
+                color: #64748B;
+                font-size: 11pt;
+                font-weight: 500;
+                padding 40px 10px;
+            }
+        """)
         layout.addWidget(self.label_nessuna_selezione)
 
        
 
         self.label_nome = QLabel()
-        self.label_nome.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.label_nome.setStyleSheet(
+            "font-weight: bold; font-size: 14px; color: #FFFFFF;"
+        )
+
+        self.label_stato_archiviazione = QLabel()
+        self.label_stato_archiviazione.setStyleSheet("""
+            QLabel {
+            font-size: 9pt;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 6px;
+            }
+        """)
+
+        riga_header = QHBoxLayout()
+        riga_header.addWidget(self.label_nome)
+        riga_header.addStretch()
+        riga_header.addWidget(self.label_stato_archiviazione)
+        layout.addLayout(riga_header)
+
+        card_info = QFrame()
+        card_info.setStyleSheet("""
+            QFrame {
+                background-color: #222733;
+                border-radius: 10px;
+                padding: 8px;
+            }
+            QLabel {
+                background-color: trasparent
+                font-size: 9.5pt;
+            }
+        """)
+        grid_info  = QGridLayout(card_info)
+        grid_info.setVerticalSpacing(8)
+
+
         self.label_id = QLabel()
         self.label_categoria = QLabel()
         self.label_location = QLabel()
@@ -306,51 +385,123 @@ class FinestraPrincipale(QMainWindow):
         self.label_quantita = QLabel()
         self.label_data_acquisto = QLabel()
         self.label_note = QLabel()
-        self.label_immagine = QLabel()
-        self.label_stato_archiviazione = QLabel()
+
+        self.label_id.setStyleSheet("color: #E2E8F0; font-weight: bold;")
+        self.label_categoria.setStyleSheet("color: #A855F7;")
+        self.label_location.setStyleSheet("color: #3A9DF8;")
+        self.label_quantita.setStyleSheet("color: #4CAF50; font-weight: bold;")
+        self.label_abbreviazione.setStyleSheet("color: #00ADB5;")
+        self.label_descrizione.setStyleSheet("color: #CBD5E1;")
+        self.label_data_acquisto.setStyleSheet("color: #94A3B8;")
+        self.label_note.setStyleSheet("color: #94A3B8;")        
 
         for label in (self.label_descrizione, self.label_note):
             label.setWordWrap(True)
 
-        self.label_immagine.setFixedSize(200, 200)
-        self.label_immagine.setStyleSheet("border: 1px solid gray;")
-
-        campi_dettaglio =[
-            self.label_nome, self.label_id, self.label_categoria, self.label_location,
-            self.label_descrizione, self.label_abbreviazione, self.label_quantita,
-            self.label_data_acquisto, self.label_note, self.label_immagine,
-            self.label_stato_archiviazione,
+        mantenimento_campi = [
+        ("ID:", self.label_id),
+        ("Category:", self.label_categoria),
+        ("Location:", self.label_location),
+        ("Amount:", self.label_quantita),
+        ("Code:", self.label_abbreviazione),
+        ("Description:", self.label_descrizione),
+        ("Purchase Date:", self.label_data_acquisto),
+        ("Note:", self.label_note),
         ]
-        for label in campi_dettaglio:
-            if label is not self.label_immagine:
-                label.setWordWrap(True)
-            label.setVisible(False)
-            layout.addWidget(label)
+
+        for idx, (txt, w_label) in enumerate(mantenimento_campi):
+            lbl_k = QLabel(txt)
+            lbl_k.setStyleSheet("color: #94A3B8; font-weight: 500;")
+            grid_info.addWidget(lbl_k, idx, 0)
+            grid_info.addWidget(w_label, idx, 1)
+
+        layout.addWidget(card_info)
+
+        self.label_immagine = QLabel()
+        self.label_immagine.setFixedSize(180, 180)
+        self.label_immagine.setAlignment(Qt.AlignCenter)
+        self.label_immagine.setStyleSheet("""
+            QLabel {
+                background-color: #1A1D24;
+                border: 1px dashed #2D3342;
+                border-radius: 8px;
+                color: #64748B;
+            }
+        """)
+        box_img = QHBoxLayout()
+        box_img.addStretch()
+        box_img.addWidget(self.label_immagine)
+        box_img.addStretch()
+        layout.addLayout(box_img)
 
         self.spin_quantita_movimento = QSpinBox()
         self.spin_quantita_movimento.setMinimum(1)
         self.spin_quantita_movimento.setMaximum(9999)
-        self.spin_quantita_movimento.setVisible(False)
+        self.spin_quantita_movimento.setStyleSheet("""
+            QSpinBox {
+            background-color: #222733;
+            color: #FFFFFF;
+            border: 1px solid #2D3342;
+            border-radius: 6px;
+            padding: 6px;
+            font-size: 10pt;
+            font-weight: bold;
+            }
+        """)
         layout.addWidget(self.spin_quantita_movimento)
 
         griglia_bottoni = QGridLayout()
-        griglia_bottoni.setSpacing(6)
+        griglia_bottoni.setSpacing(8)
 
         self.bottone_preleva = QPushButton("Retrieve Item")
         self.bottone_deposita = QPushButton("Store Item")
         self.bottone_modifica = QPushButton("Edit Item")
         self.bottone_archivia_ripristina = QPushButton("Archive Item")
-        self.bottone_trasferisci = QPushButton("Transfert Item")
-        self.bottone_preleva.setVisible(False)
-        self.bottone_deposita.setVisible(False)
-        self.bottone_modifica.setVisible(False)
-        self.bottone_archivia_ripristina.setVisible(False)
-        self.bottone_trasferisci.setVisible(False)
+        self.bottone_trasferisci = QPushButton("Transfer Item")
+
         self.bottone_preleva.clicked.connect(self._on_preleva_cliccato)
         self.bottone_deposita.clicked.connect(self._on_deposita_cliccato)
         self.bottone_modifica.clicked.connect(self._on_modifica_cliccato)
         self.bottone_archivia_ripristina.clicked.connect(self._on_archivia_riprisina_cliccato)
         self.bottone_trasferisci.clicked.connect(self._on_trasferisci_cliccato)
+
+        stile_base_btn = """
+        QPushButton {
+            background-color: #222733;
+            color: #E2E8F0;
+            border: 1px solid #2D3342;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 9pt;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background-color: #2A303D;
+            color: #FFFFFF;
+        }
+        """
+        for btn in (
+        self.bottone_preleva,
+        self.bottone_deposita,
+        self.bottone_modifica,
+        self.bottone_archivia_ripristina,
+        self.bottone_trasferisci,
+        ):
+            btn.setStyleSheet(stile_base_btn)
+
+        self.bottone_preleva.setStyleSheet(
+        stile_base_btn
+        + "QPushButton { border-color: #00ADB5; color: #00ADB5; }"
+        )
+        self.bottone_deposita.setStyleSheet(
+        stile_base_btn
+        + "QPushButton { border-color: #4CAF50; color: #4CAF50; }"
+        )
+        self.bottone_trasferisci.setStyleSheet(
+        stile_base_btn
+        + "QPushButton { border-color: #3A9DF8; color: #3A9DF8; }"
+        )
+
         griglia_bottoni.addWidget(self.bottone_preleva, 0, 0)
         griglia_bottoni.addWidget(self.bottone_deposita, 0, 1)
         griglia_bottoni.addWidget(self.bottone_modifica, 0, 2)
@@ -359,22 +510,56 @@ class FinestraPrincipale(QMainWindow):
         layout.addLayout(griglia_bottoni)
 
         self.label_anteprima_codice = QLabel()
-        self.label_anteprima_codice.setFixedSize(150,150)
-        self.label_anteprima_codice.setStyleSheet("border: 1px solid gray;")
+        self.label_anteprima_codice.setFixedSize(140,140)
+        self.label_anteprima_codice.setStyleSheet("""
+            QLabel {
+                background-color: #FFFFFF;
+                border-radius: 8px;
+                padding: 4px;
+            }
+        """)
         self.label_anteprima_codice.setAlignment(Qt.AlignCenter)
-        self.label_anteprima_codice.setVisible(False)
-        layout.addWidget(self.label_anteprima_codice)
+
+        box_qr = QHBoxLayout()
+        box_qr.addStretch()
+        box_qr.addWidget(self.label_anteprima_codice)
+        box_qr.addStretch()
+        layout.addLayout(box_qr)
 
         riga_codice_bottoni = QHBoxLayout()
+        riga_codice_bottoni.setSpacing(8)
+
         self.bottone_genera_codice = QPushButton("Generate Code")
         self.bottone_stampa_codice = QPushButton("Print Code")
-        self.bottone_genera_codice.setVisible(False)
-        self.bottone_stampa_codice.setVisible(False)
+
+        for btn in (self.bottone_genera_codice, self.bottone_stampa_codice):
+            btn.setStyleSheet(stile_base_btn)
+
         self.bottone_genera_codice.clicked.connect(self._on_genera_codice_cliccato)
         self.bottone_stampa_codice.clicked.connect(self._on_stampa_etichetta_cliccato)
+
         riga_codice_bottoni.addWidget(self.bottone_genera_codice)
         riga_codice_bottoni.addWidget(self.bottone_stampa_codice)
         layout.addLayout(riga_codice_bottoni)
+
+        self.campi_dettaglio = [
+            card_info,
+            self.label_nome,
+            self.label_stato_archiviazione,
+            self.label_immagine,
+            self.spin_quantita_movimento,
+            self.bottone_preleva,
+            self.bottone_deposita,
+            self.bottone_modifica,
+            self.bottone_archivia_ripristina,
+            self.bottone_trasferisci,
+            self.label_anteprima_codice,
+            self.bottone_genera_codice,
+            self.bottone_stampa_codice,
+        ]
+
+        for element in self.campi_dettaglio:
+            element.setVisible(False)
 
         layout.addStretch()
 
@@ -382,6 +567,9 @@ class FinestraPrincipale(QMainWindow):
         scroll.setWidget(contenuto)
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setStyleSheet(
+            "QScrollArea { border: none; background-color: #1A1D24; }"
+        )
         return scroll
 
     def _testo_o_placeholder(self, valore, placeholder: str = "No Data")-> str:
@@ -410,90 +598,144 @@ class FinestraPrincipale(QMainWindow):
             return
 
         self.label_nessuna_selezione.setVisible(False)
-
+        for widget in self.campi_dettaglio:
+            widget.setVisible(True)
+        
         self.label_nome.setText(oggetto["nome"])
 
-        if oggetto["archiviato_il"] is not None:
-            self.label_nome.setStyleSheet("font-weight: bold; font-size: 14px; color: orange;")
-        else:
-            self.label_nome.setStyleSheet("font-weight: bold; font-size: 14px;")
+        
+        self.label_id.setText(f"#{oggetto['id']}")
+        self.label_abbreviazione.setText(self._testo_o_placeholder(oggetto['abbreviazione'], "N/A"))
 
-        self.label_id.setText(f"ID: #{oggetto['id']}")
-        self.label_abbreviazione.setText(f"Code: {oggetto['abbreviazione']}")
-        self.label_quantita.setText(f"Amount: {oggetto['quantita']} [{oggetto['unita_misura']}]")
+        unita = f" [{oggetto['unita_misura']}]" if oggetto.get("unita_misura") else ""
+        self.label_quantita.setText(f"{oggetto['quantita']}{unita}")
+
         self.label_descrizione.setText(
-            f"Description: {self._testo_o_placeholder(oggetto['descrizione'], 'Not available')}"
+            self._testo_o_placeholder(oggetto['descrizione'], 'Not available')
         )
+
         self.label_data_acquisto.setText(
-            f"Purchase Date: {self._testo_o_placeholder(oggetto['data_acquisto'], 'Unknown')}"
+            self._testo_o_placeholder(oggetto['data_acquisto'], 'Unknown')
         )
-        self.label_note.setText(f"Note: {self._testo_o_placeholder(oggetto['note'], 'Not available')}")
+
+        self.label_note.setText(self._testo_o_placeholder(oggetto['note'], 'Not available'))
 
         #categoria
         if oggetto["id_categoria"] is not None:
             categoria = categoria_repo.leggi_categoria(oggetto["id_categoria"])
             if categoria:
-                colore_testo = f" (color : {categoria['colore']})" if categoria["colore"] else ""
-                self.label_categoria.setText(f"Category: {categoria['nome']}{colore_testo}")
+                self.label_categoria.setText(categoria['nome'])
+                colore_cat = categoria.get("colore") if categoria.get("colore") else "#00ADB5"
+                self.label_categoria.setStyleSheet(
+                    f"background: transparent; color: {colore_cat}; font-weight: bold;"
+                )
             else:
-                self.label_categoria.setText("Category: (Deleted)")
+                self.label_categoria.setText("(Deleted)")
+                self.label_categoria.setStyleSheet("color: #EF4444;")
         else:
-            self.label_categoria.setText("Category: Not available")
+            self.label_categoria.setText("Not available")
+            self.label_categoria.setStyleSheet("color: #94A3B8;")
 
         #location
         if oggetto["id_location"] is not None:
             location = location_repo.leggi_location(oggetto["id_location"])
             if location:
-                self.label_location.setText(f"Location: {location['nome']}")
+                self.label_location.setText(location['nome'])
+                self.label_location.setStyleSheet(
+                "color: #00ADB5; font-weight: bold;"
+                )
             else:
-                self.label_location.setText("Location: (Deleted)")
+                self.label_location.setText("(Deleted)")
+                self.label_location.setStyleSheet("color: #EF4444;")
         else:
             self.label_location.setText("Location: Not available")
+            self.label_location.setStyleSheet("color: #94A3B8;")
 
+        
         #immagine
         self.label_immagine.clear()
-        percorco_immagine = oggetto["immagine_path"]
-        if percorco_immagine and Path(percorco_immagine).exists():
-            pixmap = QPixmap(percorco_immagine).scaled(
-            200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        percorso_immagine = oggetto["immagine_path"]
+        if percorso_immagine and Path(percorso_immagine).exists():
+            pixmap = QPixmap(percorso_immagine).scaled(
+            180, 180, Qt.KeepAspectRatio, Qt.SmoothTransformation
             )
             self.label_immagine.setPixmap(pixmap)
+            self.label_immagine.setStyleSheet("""
+                QLabel {
+                    background-color: #1A1D24;
+                    border: 1px solid #2D3342;
+                    border-radius: 8px;
+                }
+            """)
         else:
-            self.label_immagine.setText("📷\nNo Image")
-            self.label_immagine.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.label_immagine.setStyleSheet("border: 1px dashed gray; color: gray")
+            self.label_immagine.setText("📷\nNo Image Available")
+            self.label_immagine.setAlignment(Qt.AlignCenter)
+            self.label_immagine.setStyleSheet("""
+                QLabel {
+                    background-color: #1A1D24;
+                    border: 1px dashed #2D3342;
+                    border-radius: 8px;
+                    color: #64748B;
+                    font-size: 9.5pt;
+                }
+            """)
+
+        
 
         #archiviato
         if oggetto["archiviato_il"] is not None:
-            self.label_stato_archiviazione.setText(f"⚠ Archived on: {oggetto['archiviato_il']}")
-            self.label_stato_archiviazione.setStyleSheet("color: orange;")
+            self.label_stato_archiviazione.setText(f"⚠ Archived ({oggetto['archiviato_il']})")
+            self.label_stato_archiviazione.setStyleSheet("""
+                QLabel {
+                    background-color: #7C2D12;
+                    color: #FDBA74;
+                    font-size: 8.5pt;
+                    font-weight: bold;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                }
+            """)
             self.bottone_archivia_ripristina.setText("Unarchive")
         else:
-            self.label_stato_archiviazione.setText("State: Active")
-            self.label_stato_archiviazione.setStyleSheet("color: green;")
+            self.label_stato_archiviazione.setText("Active")
+            self.label_stato_archiviazione.setStyleSheet("""
+                QLabel {
+                    background-color: #065F46;
+                    color: #34D399;
+                    font-size: 8.5pt;
+                    font-weight: bold;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                }
+            """)
             self.bottone_archivia_ripristina.setText("Archive")
 
         #codice stampa + genera
         riga_codice = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato)
         self.label_anteprima_codice.clear()
-        if riga_codice:
-            pixmap = QPixmap(riga_codice["immagine_path"]).scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        if ( riga_codice and riga_codice.get("immagine_path") and Path(riga_codice["immagine_path"]).exists() ):
+            pixmap = QPixmap(riga_codice["immagine_path"]).scaled(130, 130, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.label_anteprima_codice.setPixmap(pixmap)
+            self.label_categoria.setStyleSheet("""
+                QLabel {
+                background-color: #FFFFFF;
+                border-radius: 8px;
+                padding: 4px;
+                }
+            """)
             self.bottone_genera_codice.setText("Regenerate Code")
         else:
-            self.bottone_genera_codice.setText("Generate Code")
             self.label_anteprima_codice.setText("No Code")
-
-        campi_dettaglio = [
-            self.label_nome, self.label_id, self.label_categoria, self.label_location,
-            self.label_descrizione, self.label_abbreviazione, self.label_quantita,
-            self.label_data_acquisto, self.label_note, self.label_immagine,
-            self.label_stato_archiviazione,
-            self.spin_quantita_movimento, self.bottone_preleva, self.bottone_deposita, self.bottone_modifica, self.bottone_archivia_ripristina, self.bottone_trasferisci,
-            self.label_anteprima_codice, self.bottone_genera_codice, self.bottone_stampa_codice
-        ]
-        for widget in campi_dettaglio:
-            widget.setVisible(True)
+            self.label_anteprima_codice.setAlignment(Qt.AlignCenter)
+            self.label_anteprima_codice.setStyleSheet("""
+                QLabel {
+                    background-color: #1A1D24;
+                    border: 1px dashed #2D3342;
+                    border-radius: 8px;
+                    color: #64748B;
+                }
+            """)            
+            self.bottone_genera_codice.setText("Generate Code")
 
     def _on_archivia_riprisina_cliccato(self):
         oggetto = oggetto_repo.leggi_oggetto(self.id_oggetto_selezionato, include_archiviati=True)
@@ -667,7 +909,7 @@ class FinestraPrincipale(QMainWindow):
     def _popola_tabella(self, oggetti: list[dict]):
         """Riempie la tabella con una lista di oggetti già pronta — usata sia per
         il contenuto di una location, sia per risultati di ricerca non legati a una sola."""
-        self.label_vuoto.setVisible(not oggetti)
+        self.container_vuoto.setVisible(not oggetti)
         self.tabella_oggetti.setVisible(bool(oggetti))
 
         self.modello_oggetti.setRowCount(0)

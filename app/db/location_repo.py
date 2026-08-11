@@ -3,6 +3,12 @@ import re
 
 from pathlib import Path
 
+class LocationHasItemsError(Exception):
+    pass
+
+class LocationHasChildrenError(Exception):
+    pass
+
 def prefisso(tipo: str) -> str:
     pulito = re.sub(r"[^A-Za-z]", "", tipo)
     return pulito.upper()[:3] or "XXX"
@@ -193,12 +199,12 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
         discendenti = _raccogli_discendenti(connDB, location_id)
 
         if _qualcuno_ha_oggetti(connDB, [location_id] + discendenti):
-            raise Exception(
+            raise LocationHasItemsError(
                 "The location (or one of its sub-locations) contains items and cannot be deleted."
             )
 
         if discendenti and azione_figli not in ("elimina", "sposta"):
-            raise Exception(
+            raise LocationHasChildrenError(
                 "The location contains sub-locations. Specify 'elimina' or 'sposta'."
             )
 

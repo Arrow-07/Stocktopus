@@ -1,6 +1,12 @@
 from app.db.initdb import ConnectDB
 import re
 
+class CategoriaHasItemsError(Exception):
+    pass
+
+class CategoriaHasChildrenError(Exception):
+    pass
+
 def _valida_codice_categoria(connDB, codice: str | None, escludi_id: int | None = None) -> None:
     """Solleva un'eccezione se il codice non rispetta il formato o è già usato.
     escludi_id serve per aggiorna_categoria, per non confrontare una categoria con se stessa."""
@@ -131,6 +137,18 @@ def aggiorna_categoria(categoria_id: int, nome: str | None = None, descrizione: 
         if codice is not UNSET:
             if codice is not None:
                 codice = codice.strip().upper()
+
+                riga_attuale = connDB.execute(
+                    "SELECT codice FROM categorie WHERE id = ?", (categoria_id,)
+                ).fetchone()
+
+                codice_invariato = riga_attuale and riga_attuale["codice"] == codice
+
+                if not codice_invariato and _qualcuno_ha_oggetti(connDB, [categoria_id]):
+                    raise ValueError(
+                        "Cannot change the code: this category already has items assigned."
+                    )
+                
                 _valida_codice_categoria(connDB, codice, escludi_id=categoria_id)
             
             campi_da_aggiornare.append("codice = ?")
@@ -199,12 +217,12 @@ def elimina_categorie(categoria_id: int, azione_figli: str | None = None) -> boo
         discendenti = _raccogli_discendenti(connDB, categoria_id)
 
         if _qualcuno_ha_oggetti(connDB, [categoria_id] + discendenti):
-            raise Exception(
+            raise CategoriaHasItemsError(
                 "The category (or one of its subcategories) contains items and cannot be deleted."
             )
 
         if discendenti and azione_figli not in ("elimina", "sposta"):
-            raise Exception(
+            raise CategoriaHasChildrenError(
                 "The category contains subcategories. Specify 'delete' or 'move'."
             )
 
