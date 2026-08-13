@@ -76,7 +76,7 @@ Current database entities include:
 
 ## Roadmap
 
-Current progress: **Phase 3 – Graphical User Interface** 🚧
+Current progress: **Phase 6 - Settings, backups, packaging** 🚧
 
 | Status | Phase | Description |
 |:------:|-------|-------------|
@@ -84,9 +84,9 @@ Current progress: **Phase 3 – Graphical User Interface** 🚧
 | ✅ | **Phase 1** | SQLite database architecture, data models and CRUD operations. |
 | ✅ | **Phase 2** | QR Code, Barcode and label generation. |
 | ✅ | **Phase 3** | Desktop graphical interface, item management and search. |
-| 🚧 | **Phase 4** | Dashboard, statistics and movement history. |
-| ⏳ | **Phase 5** | Smart location suggestions based on inventory data. |
-| ⏳ | **Phase 6** | Settings, backups, packaging and application release. |
+| ✅ | **Phase 4** | Dashboard, statistics and movement history. |
+| ✅ | **Phase 5** | Smart location suggestions based on inventory data. |
+| 🚧 | **Phase 6** | Settings, backups, packaging and application release. |
 
 
 ---

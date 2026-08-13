@@ -85,7 +85,17 @@ class FinestraCategorie(QDialog):
                 categoria_repo.elimina_categorie(id_cat, azione_figli="sposta")
             else:
                 return
+        except CategoriaHasItemsError as errore:
+            QMessageBox.critical(self, "Cannot delete", str(errore))
+            return
         except CategoriaHasChildrenError as errore:
             QMessageBox.critical(self, "Cannot delete", str(errore))
             return
+        except Exception as errore:
+            QMessageBox.critical(self, "Error", str(errore))
+            return
+        
         self._ricarica()
+
+
+    

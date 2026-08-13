@@ -16,6 +16,8 @@ class FormLocation(QDialog):
         self.setWindowTitle("Edit location" if id_location else "Create new Location")
         self.setMinimumWidth(350)
 
+        self.id_location = id_location
+
         layout = QFormLayout(self)
 
         self.campo_nome = QLineEdit()

@@ -131,11 +131,17 @@ def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr", conferma: 
             #Call this function again with confirm=True after warning the user.
         )
 
-    _elimina_codice_e_immagine(codice_repo.leggi_codice_oggetto(id_oggetto))
-
     oggetto = oggetto_repo.leggi_oggetto(id_oggetto)
     if oggetto is None:
         raise Exception("Item not found.")
+
+    vecchio_codice = codice_repo.leggi_codice_oggetto(id_oggetto)
+
+    if vecchio_codice is None:
+        raise Exception("This item does not have a code to regenerate.")    
+
+    _elimina_codice_e_immagine(codice_repo.leggi_codice_oggetto(id_oggetto))
+    
 
     testo = oggetto["abbreviazione"]
     percorso = _genera_immagine(testo, tipo_codice)
@@ -163,12 +169,17 @@ def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma
             #richiama con true dopo avviso utente
         )
 
-    _elimina_codice_e_immagine(codice_repo.leggi_codice_location(id_location))
-    
     location = location_repo.leggi_location(id_location)
     if location is None:
         raise Exception("Location not found.")
+    
+    vecchio_codice = codice_repo.leggi_codice_location(id_location)
 
+    if vecchio_codice is None:
+        raise Exception("This location does not have a code to regenerate.")   
+
+    _elimina_codice_e_immagine(codice_repo.leggi_codice_location(id_location))
+    
     testo = location["abbreviazione"]
     percorso = _genera_immagine(testo, tipo_codice)
     id_codice = codice_repo.crea_codice(tipo_codice, testo, str(percorso), id_location=id_location)

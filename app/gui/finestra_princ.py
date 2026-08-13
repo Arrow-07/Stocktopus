@@ -149,6 +149,17 @@ class FinestraPrincipale(QMainWindow):
         menu.addSeparator()
         menu.addAction("New Item here", lambda: FormOggetto(self, id_location).exec() and self._aggiorna_tabella_oggetti(id_location))
         menu.addAction("New sub-location", lambda: self._apri_form_nuova_location_con_genitore(id_location))
+        menu.addSeparator()
+
+        codice = codice_repo.leggi_codice_location(id_location)
+
+        if codice is None:
+            menu.addAction("Generate Location Code", lambda: self._genera_codice_location(id_location))
+        else:
+            menu.addAction("Regenerate Location Code", lambda: self._rigenera_codice_location(id_location))
+
+        menu.addAction("Print Location Code", lambda: self._stampa_codice_location(id_location))
+        
         menu.exec(self.albero_location.viewport().mapToGlobal(pos))
 
     def _apri_form_modifica_location(self, id_location):
@@ -178,7 +189,7 @@ class FinestraPrincipale(QMainWindow):
         
         box = QMessageBox(self)
         box.setText("This location contains sub-locations. What do you want to do?")
-        b_elimina = box.addButton("Delete all", QMessageBox.AcceptRole)
+        b_elimina = box.addButton("Delete hierarchy", QMessageBox.AcceptRole)
         b_elimina.setObjectName("btnCancel")
         b_sposta = box.addButton("Move children up", QMessageBox.ActionRole)
         box.addButton("Cancel", QMessageBox.RejectRole)
@@ -191,6 +202,8 @@ class FinestraPrincipale(QMainWindow):
                 location_repo.elimina_location(id_location, azione_figli="sposta")
             else:
                 return
+        except LocationHasItemsError as errore:
+            QMessageBox.warning(self, "Cannot delete", str(errore))
         except LocationHasChildrenError as errore:
             QMessageBox.critical(self, "Cannot delete", str(errore))
             return
@@ -627,7 +640,7 @@ class FinestraPrincipale(QMainWindow):
                 self.label_categoria.setText(categoria['nome'])
                 colore_cat = categoria.get("colore") if categoria.get("colore") else "#00ADB5"
                 self.label_categoria.setStyleSheet(
-                    f"background: transparent; color: {colore_cat}; font-weight: bold;"
+                    f"background-color: transparent; color: {colore_cat}; font-weight: bold;"
                 )
             else:
                 self.label_categoria.setText("(Deleted)")
@@ -716,7 +729,7 @@ class FinestraPrincipale(QMainWindow):
         if ( riga_codice and riga_codice.get("immagine_path") and Path(riga_codice["immagine_path"]).exists() ):
             pixmap = QPixmap(riga_codice["immagine_path"]).scaled(130, 130, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.label_anteprima_codice.setPixmap(pixmap)
-            self.label_categoria.setStyleSheet("""
+            self.label_anteprima_codice.setStyleSheet("""
                 QLabel {
                 background-color: #FFFFFF;
                 border-radius: 8px;
@@ -841,14 +854,83 @@ class FinestraPrincipale(QMainWindow):
             risultato.extend(self._elenco_location_flat_globale(loc["id"], profondita +1))
 
         return risultato
+
+    def _genera_codice_location(self, id_location: int):
+        try:
+            servizio_codici.genera_codice_location(
+                id_location,
+                tipo_codice="qr"
+            )
+
+        except Exception as errore:
+            QMessageBox.critical(
+                self,
+                "Error",
+                str(errore)
+            )
+            return
+
+    def _rigenera_codice_location(self, id_location: int):
+        risposta = QMessageBox.question(
+            self,
+            "Regenerate Location Code",
+            "The current location code and its image will be deleted.\n\n"
+            "Do you want to regenerate it?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if risposta != QMessageBox.Yes:
+            return
+
+        try:
+            servizio_codici.rigenera_codice_location(
+                id_location,
+                tipo_codice="qr",
+                conferma=True
+            )
+
+        except Exception as errore:
+            QMessageBox.critical(
+                self,
+                "Error",
+                str(errore)
+            )
+            return
+
+    def _stampa_codice_location(self, id_location: int):
+        try:
+            riga = servizio_codici.ottieni_o_genera_codice_location(
+                id_location,
+                tipo_codice="qr"
+            )
+
+            self._stampa_codici([riga])
+
+        except Exception as errore:
+            QMessageBox.critical(
+                self,
+                "Error",
+                str(errore)
+            )
     
     def _on_genera_codice_cliccato(self):
         esiste = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato) is not None
         tipo = "qr"
 
+        if esiste:
+            risposta = QMessageBox.question(
+                self,
+                "Regenerete code",
+                "The current code and its immage will be deleted\n Do you want to regenerate it?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if risposta != QMessageBox.Yes:
+                return
         try:
             if esiste:
-                servizio_codici.rigenera_codice_oggetto(self.id_oggetto_selezionato)
+                servizio_codici.rigenera_codice_oggetto(self.id_oggetto_selezionato, conferma=True)
             else:
                 servizio_codici.genera_codice_oggetto(self.id_oggetto_selezionato, tipo)
         except Exception as errore:

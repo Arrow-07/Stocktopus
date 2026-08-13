@@ -198,9 +198,10 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
     try:
         discendenti = _raccogli_discendenti(connDB, location_id)
 
+
         if _qualcuno_ha_oggetti(connDB, [location_id] + discendenti):
             raise LocationHasItemsError(
-                "The location (or one of its sub-locations) contains items and cannot be deleted."
+                "The location (or one of its sub-locations) contains items. Move or remove the items before deleting the location."
             )
 
         if discendenti and azione_figli not in ("elimina", "sposta"):
@@ -210,7 +211,8 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
 
         if azione_figli == "elimina":
             # cancella dal più profondo al più superficiale, altrimenti la FK blocca
-            _elimina_codici_di_locations(connDB, [location_id])
+            _elimina_codici_di_locations(connDB, [location_id] + discendenti)
+
             for id_discendente in reversed(discendenti):
                 _nullifica_movimenti_location(connDB, id_discendente)
                 connDB.execute("DELETE FROM locations WHERE id = ?", (id_discendente,))
@@ -227,7 +229,7 @@ def elimina_location(location_id: int, azione_figli: str | None = None) -> bool:
                 (nuovo_genitore, location_id)
             )
 
-        _elimina_codici_di_locations(connDB, discendenti)
+        _elimina_codici_di_locations(connDB, [location_id])
         _nullifica_movimenti_location(connDB, location_id)
         cur = connDB.execute("DELETE FROM locations WHERE id = ?", (location_id,))
         connDB.commit()

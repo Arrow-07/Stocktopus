@@ -218,7 +218,7 @@ def elimina_categorie(categoria_id: int, azione_figli: str | None = None) -> boo
 
         if _qualcuno_ha_oggetti(connDB, [categoria_id] + discendenti):
             raise CategoriaHasItemsError(
-                "The category (or one of its subcategories) contains items and cannot be deleted."
+                "The category (or one of its subcategories) contains items. Move or remove the items before deleting the category."
             )
 
         if discendenti and azione_figli not in ("elimina", "sposta"):
