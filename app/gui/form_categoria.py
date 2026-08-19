@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QColor
 
 from app.db import categoria_repo
-
+from app.localization import t
 class FormCategoria(QDialog):
     """form di creazione per uuna nuova categoria. id_genitore_preselezionato, se fornito, viene proposto come genitore di defoult"""
 
@@ -12,37 +12,37 @@ class FormCategoria(QDialog):
         super().__init__(parent)
         self.id_categoria = id_categoria
 
-        self.setWindowTitle("Edit Category" if id_categoria else "New Category")
+        self.setWindowTitle(t("categories.edit") if id_categoria else t("categories.edit"))
         self.setMinimumWidth(350)
 
         layout = QFormLayout(self)
 
         self.campo_nome = QLineEdit()
-        layout.addRow("Name*:", self.campo_nome)
+        layout.addRow(t("gui.name") + "*:", self.campo_nome)
 
         self.campo_codice = QLineEdit()
-        self.campo_codice.setPlaceholderText("2-5 uppercase letters (e.g. ELE, optional)")
-        layout.addRow("Code:", self.campo_codice)
+        self.campo_codice.setPlaceholderText(t("gui.placeholder_cod_cat"))
+        layout.addRow(t("pannel.cod"), self.campo_codice)
 
-        self.colore = QColor("#2196F3")
-        self.campo_colore = QPushButton("Select Color")
+        self.colore = QColor("#00ADB5")
+        self.campo_colore = QPushButton(t("gui.sel_col"))
         self.campo_colore.setFixedWidth(80)
         self.campo_colore.clicked.connect(self._scegli_colore)
 
         self._aggiorna_bottone_colore()
 
-        layout.addRow("Color:", self.campo_colore)
+        layout.addRow(t("pannel.color"), self.campo_colore)
 
         self.campo_descrizione = QLineEdit()
-        layout.addRow("Description:", self.campo_descrizione)
+        layout.addRow(t("pannel.des"), self.campo_descrizione)
 
         self.combo_genitore = QComboBox()
         self._popola_combo_genitore(id_genitore_preselezionato)
-        layout.addRow("Parent category:", self.combo_genitore)
+        layout.addRow(t("pannel.parent_cat"), self.combo_genitore)
 
         riga_bottoni = QHBoxLayout()
-        bottone_salva = QPushButton("Save")
-        bottone_annulla = QPushButton("Cancel")
+        bottone_salva = QPushButton(t("common.save"))
+        bottone_annulla = QPushButton(t("common.cancel"))
         bottone_salva.setObjectName("btnSave")
         bottone_annulla.setObjectName("btnCancel")
         bottone_salva.clicked.connect(self._on_salva)
@@ -55,7 +55,7 @@ class FormCategoria(QDialog):
             self._precompila(id_categoria)
 
     def _popola_combo_genitore(self, id_preselezionato : int | None):
-        self.combo_genitore.addItem("-- None (Root Level) --")
+        self.combo_genitore.addItem(t("gui.none"), None)
         indice_da_selezionare = 0
 
         for id_cat, testo, profondita in self._elenco_flat():
@@ -110,7 +110,7 @@ class FormCategoria(QDialog):
         nome = self.campo_nome.text().strip()
 
         if not nome:
-            QMessageBox.warning(self, "Missing Field", "Name is Required!")
+            QMessageBox.warning(self, t("errors.missing_field"), t("errors.name_req"))
             return
 
         codice = self.campo_codice.text().strip() or None
@@ -125,10 +125,10 @@ class FormCategoria(QDialog):
                 categoria_repo.crea_categoria(nome, descrizione, id_genitore, colore, codice)
                 
         except ValueError as errore:
-            QMessageBox.warning(self, "Code not valid", str(errore))
+            QMessageBox.warning(self, t("errors.code_not_valid"), str(errore))
             return
         except Exception as errore:
-            QMessageBox.critical(self, "Error while SAVING", str(errore))
+            QMessageBox.critical(self, t("errors.error_while_saving"), str(errore))
             return
 
         self.accept()

@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
 )
 from app.db import oggetto_repo, categoria_repo, location_repo
 from app.logic import suggerimenti
+from app.localization import t
+
 
 class FormOggetto(QDialog):
     """
@@ -22,21 +24,21 @@ class FormOggetto(QDialog):
 
         self.id_oggetto = id_oggetto
 
-        self.setWindowTitle("Edit item" if id_oggetto else "New Item")
+        self.setWindowTitle(t("item.edit") if id_oggetto else t("item.new"))
         self.setMinimumWidth(400)
 
         layout = QFormLayout(self)
 
         self.campo_nome = QLineEdit()
-        layout.addRow("Name*:", self.campo_nome)
+        layout.addRow(t("gui.name") + "*:", self.campo_nome)
 
         self.combo_categoria = QComboBox()
         self._popola_combo_categoria()
-        layout.addRow("Category:", self.combo_categoria)
+        layout.addRow(t("pannel.cat"), self.combo_categoria)
 
         self.combo_location = QComboBox()
         self._popola_combo_location(id_location_preselezionata)
-        layout.addRow("Location:", self.combo_location)
+        layout.addRow(t("pannel.loc"), self.combo_location)
 
         self.combo_categoria.currentIndexChanged.connect(self._aggiorna_suggerimento)
         self._id_location_suggerita = None
@@ -48,39 +50,39 @@ class FormOggetto(QDialog):
         
         self.campo_quantita = QSpinBox()
         self.campo_quantita.setRange(0, 999999)
-        layout.addRow("Quantity:", self.campo_quantita)
+        layout.addRow(t("pannel.amount"), self.campo_quantita)
 
         self.campo_unita_misura = QLineEdit("pz")
-        self.campo_unita_misura.setPlaceholderText("e.g. pz, pcs, kg, m, L")
-        layout.addRow("Unit of Measure:", self.campo_unita_misura)
+        self.campo_unita_misura.setPlaceholderText(t("pannel.example_abbreviation") + " pz, pcs, kg, m, L")
+        layout.addRow(t("pannel.unit_measure"), self.campo_unita_misura)
 
         self.campo_dettagli = QLineEdit()
-        self.campo_dettagli.setPlaceholderText("e.g. SMD 10K — used to generate the item code")
-        layout.addRow("Code Details:", self.campo_dettagli)
+        self.campo_dettagli.setPlaceholderText(t("pannel.example_abbreviation") + " SMD 10K " + t("gui.placeholder_code_item"))
+        layout.addRow(t("pannel.code_det"), self.campo_dettagli)
 
         self.campo_descrizione = QLineEdit()
-        layout.addRow("Descriptions:", self.campo_descrizione)
+        layout.addRow(t("pannel.des"), self.campo_descrizione)
 
         self.campo_data_acqisto = QLineEdit()
-        self.campo_data_acqisto.setPlaceholderText("YYYY-MM-DD ")
-        layout.addRow("Purchase Date:", self.campo_data_acqisto)
+        self.campo_data_acqisto.setPlaceholderText(t("gui.placeholder_purch_date"))
+        layout.addRow(t("pannel.date"), self.campo_data_acqisto)
 
         self.campo_note = QTextEdit()
         self.campo_note.setFixedHeight(60)
-        layout.addRow("Note:", self.campo_note)
+        layout.addRow(t("pannel.note"), self.campo_note)
 
         riga_immagine = QHBoxLayout()
         self.campo_immagine_path = QLineEdit()
         self.campo_immagine_path.setReadOnly(True)
-        bottone_sfoglia = QPushButton("Browse...")
+        bottone_sfoglia = QPushButton(t("gui.browse"))
         bottone_sfoglia.clicked.connect(self._on_sfoglia_immagine)
         riga_immagine.addWidget(self.campo_immagine_path)
         riga_immagine.addWidget(bottone_sfoglia)
-        layout.addRow("Image:", riga_immagine)
+        layout.addRow(t("pannel.image"), riga_immagine)
 
         riga_bottoni = QHBoxLayout()
-        bottone_salva = QPushButton("Save")
-        bottone_annulla = QPushButton("Cancel")
+        bottone_salva = QPushButton(t("common.save"))
+        bottone_annulla = QPushButton(t("common.cancel"))
         bottone_salva.setObjectName("btnSave")
         bottone_annulla.setObjectName("btnCancel")
         bottone_salva.clicked.connect(self._on_salva)
@@ -110,7 +112,7 @@ class FormOggetto(QDialog):
         self.campo_dettagli.setEnabled(False)
 
     def _popola_combo_categoria(self):
-        self.combo_categoria.addItem("-- None --", None)
+        self.combo_categoria.addItem(t("gui.none"), None)
         for id_cat, testo, profondita in self._elenco_categorie_flat():
             self.combo_categoria.addItem("    " * profondita + testo, id_cat)
 
@@ -123,7 +125,7 @@ class FormOggetto(QDialog):
 
     def _popola_combo_location(self, id_preselezionata):
             
-            self.combo_location.addItem("-- None --", None)
+            self.combo_location.addItem(t("gui.none"), None)
             indice_da_selezionare=0
 
             for id_loc, testo, profondita in self._elenco_location_flat():
@@ -141,7 +143,7 @@ class FormOggetto(QDialog):
 
     def _on_sfoglia_immagine(self):
         precorso, _ = QFileDialog.getOpenFileName(
-            self, "Select Image", "", "Image (*.png *.jpg *.jpeg)"
+            self, t("gui.sel_img"), "", t("gui.image") + " (*.png *.jpg *.jpeg)"
         )
         if  not precorso:
             return
@@ -158,7 +160,7 @@ class FormOggetto(QDialog):
         if trovati:
             migliore = trovati[0]
             self._id_location_suggerita  = migliore["id"]
-            self.bottone_suggerimento.setText(f"🔎 Best match: {migliore['nome']}")
+            self.bottone_suggerimento.setText(f"{t('gui.best_match')} {migliore['nome']}")
             self.bottone_suggerimento.setVisible(True)
         else:
             self.bottone_suggerimento.setVisible(False)
@@ -173,7 +175,7 @@ class FormOggetto(QDialog):
         nome = self.campo_nome.text().strip()
 
         if not nome:
-            QMessageBox.warning(self, "Missing Field", "Name is Required!")
+            QMessageBox.warning(self, t("errors.missing_field"), t("errors.name_req"))
             return
 
         try:
@@ -202,7 +204,7 @@ class FormOggetto(QDialog):
                     dettagli=self.campo_dettagli.text().strip() or None,
                 )
         except Exception as errore:
-            QMessageBox.critical(self, "Error while SAVING", str(errore))
+            QMessageBox.critical(self, t("errors.error_while_saving"), str(errore))
             return
 
         self.accept()

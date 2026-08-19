@@ -1,0 +1,196 @@
+{
+    "app": {
+        "name": "Stocktopus",
+        "language_name": "English (en) "
+    },
+
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "cant_delete": "Cannot delete",
+        "edit": "Edit",
+        "new": "New",
+        "close": "Close",
+        "yes": "Yes",
+        "no": "No",
+        "error": "Error",
+        "warning": "Warning",
+        "success": "Operation completed",
+        "expand": "expand",
+        "no_data": "No Data",
+        "confirm": "Confirm",
+        "type": "Type"
+    },
+
+    "search": {
+        "palceholder": "Search or scan a code...",
+        "no_resoult": "No resoult",
+        "found": "found",
+        "matching_locations": "matching locations",
+        "not_find": "No item or location find for ",
+        "multiple_loc": "Multiple locations found:",
+        "refine_your_shearch": "Refine your search to open one."
+    },
+
+    "menu": {
+        "file": "File",
+        "settings": "Settings",
+        "stat": "Statistics",
+        "inventory": "Inventory",
+        "go_to": "Go to"
+
+    },
+
+    "locations": {
+        "title": "Location",
+        "new": "New location",
+        "edit": "Edit location",
+        "delete": "Delete location",
+        "new_item_here": "New item here",
+        "new_children": "New sub-location"
+    },
+
+    "categories": {
+        "title": "Categories",
+        "new": "New category",
+        "edit": "Edit category",
+        "delete": "Delete category",
+        "manage": "Manage Categories"
+    },
+
+    "item": {
+        "title": "Item",
+        "new": "New item",
+        "edit": "Edit item",
+        "delete": "Delete item",
+        "missing": "Missing items",
+        "show_archived": "Show archivied item",
+        "archived": "Archived",
+        "unarchive": "Unarchive",
+        "active": "Active"
+    },
+
+    "codes": {
+        "title": "Codes",
+        "generate": "Generate code",
+        "regenerate": "Regenerate code",
+        "print": "Print code",
+        "print_loc": "Print codes by Location",
+        "print_cat": "Print codes by Category",
+        "no_code": "No code",
+        "gen_loc_code": "Generate Location Code",
+        "regen_loc_code": "Regenerate Location Code",
+        "print_cod_loc": "Print Location Code"
+    },
+
+    "errors": {
+        "loc_has_children": "This location contains sub-locations. What do you want to do?",
+        "cat_has_children": "This category contains sub-categories. What do you want to do?",
+        "mov_children": "Move children up",
+        "del_all": "Delete hierarchy",
+        "not_available": "Not available",
+        "not_avaible_data": "No Avaible Data",
+        "unknown": "Unknown",
+        "deleted": "Deleted",
+        "img_not_avaible": "📷\nNo Image Available",
+        "unb_retrive": "Unable to Retrieve Item",
+        "unb_store": "Unable to Store Item",
+        "no_location": "No Location",
+        "no_item": "No item",
+        "no_category": "No Category",
+        "no_location_avaible": "No locations available",
+        "no_category_find": "No Category Find.",
+        "no_item_code_print": "No item codes to print.",
+        "select_loc_first": "Please Select a location First.",
+        "warn_regen_loc": "The current location code and its image will be deleted.\n\nDo you want to regenerate it?",
+        "warn_regen_code": "The current code and its immage will be deleted\n Do you want to regenerate it?",
+        "missing_field": "Missing Field",
+        "name_req": "Name is Required!",
+        "type_req": "Type is Required!",
+        "error_while_saving": "Error while SAVING",
+        "code_not_valid": "Code not valid",
+        "sel_cat_edit": "Select a category to edit",
+        "sel_cat_del": "Select a category to delete"
+    },
+
+    "gui": {
+        "central_txt": "Select a location from the left tree to view its items",
+        "name":  "Name",
+        "amount":  "Amount",
+        "abbreviation": "Abbreviation",
+        "void_pannel": "📦\n\nNo item Selected\nSelect an item from the table to view its details",
+        "save_code_sheet": "Save code label sheet as...",
+        "sheet_created": "Sheet created",
+        "created": "Created",
+        "label_sheet": "label sheet",
+        "label_sheets": "label sheets",
+        "placeholder_code_item": " used to generate the item code",
+        "placeholder_cod_cat": "2-5 uppercase letters (e.g. ELE, optional)",
+        "placeholder_purch_date": "YYYY-MM-DD ",
+        "placeholder_type_loc": "room, cabinet, drawer, compartment",
+        "browse": "Browse...",
+        "none": "-- None --",
+        "sel_img": "Select Image",
+        "image": "Image",
+        "best_match": "🔎 Best match:",
+        "sel_col": "Select Color"
+    },
+
+    "pannel": {
+        "id": "ID:",
+        "cat": "Category:",
+        "loc": "Location:",
+        "amount": "Amount:",
+        "cod": "Code:",
+        "des": "Description:",
+        "date": "Purchase Date:",
+        "note": "Note:",
+        "retrive": "Retrieve Item",
+        "store": "Store Item",
+        "edit": "Edit Item",
+        "archive": "Archive Item",
+        "archive_btn": "Archive",
+        "archive2": "Archive",
+        "trasfer": "Transfer Item",
+        "example_abbreviation": "e.g.",
+        "unit_measure": "Unit of Measure:",
+        "code_det": "Code Details:",
+        "image": "Image:",
+        "parent_loc": "Parent location:",
+        "parent_cat": "Parent category:",
+        "color": "Color"
+    },
+
+    "stat": {
+        "main": "Stats - Stocktopus",
+        "title": "Stocktopus statistics",
+        "title_2": "Inventory & Activity Overview",
+        "update": "⏱ Updated: ",
+        "most_retrive_item": "Most Retrieved Items",
+        "most_active_loc": "Most Active Locations",
+        "cat_brkdown": "Category Breakdown",
+        "active_item": "Active Item",
+        "archived_item": "Archived Item",
+        "tot_item": "Total Quantity",
+        "mov": "Movements",
+        "curr_ava": "Currently Available",
+        "in_trash": "In Trash",
+        "tot_unit": "Total Units",
+        "tot": "Total",
+        "rec": "Recorded",
+        "mov_trend": "Movement Trends (30 Days)",
+        "mov_dist": "Movements Distribution",
+        "recent_act": "Recent Activity",
+        "retrive": "Retrieve",
+        "store": "Store",
+        "trasf": "Transfer",
+        "del_itm": "(deleted item)",
+        "insights": "💡 Insights & Analytics",
+        "insights1": "📌 3 items account for ",
+        "insights1_end": "of all movements.",
+        "insights2": " is the largest category.",
+        "insights3": "contains",
+        "insights3_end": "of the inventory."
+    }
+}

@@ -1,5 +1,5 @@
 from app.db.initdb import ConnectDB
-
+from app.localization import t
 def oggetti_piu_prelevati(limite: int = 10) -> list[dict]:
     connDB = ConnectDB()
     try:
@@ -107,7 +107,7 @@ def genera_insights() -> list[str]:
         ).fetchall()
         if totale_mov and top3:
             perc = round(100 * sum(r["c"] for r in top3) / totale_mov)
-            insights.append(f"📌 3 items account for {perc}% of all movements.")
+            insights.append(f"{t('stat.insights1')} {perc}% {t('stat.insights1_end')}")
 
         cat = connDB.execute(
             "SELECT categorie.nome, COUNT(*) c FROM oggetto "
@@ -116,7 +116,7 @@ def genera_insights() -> list[str]:
         ).fetchone()
 
         if cat:
-            insights.append(f"🏷 '{cat['nome']}' is the largest category.")
+            insights.append(f"🏷 '{cat['nome']}' {t('stat.insights2')}")
 
         loc = connDB.execute(
             "SELECT locations.nome, SUM(oggetto.quantita) tot FROM oggetto "
@@ -129,7 +129,7 @@ def genera_insights() -> list[str]:
         ).fetchone()[0]
 
         if loc and totale_q:
-            insights.append(f"📍 '{loc['nome']}' contains {round(100*loc['tot']/totale_q)}% of the inventory.")
+            insights.append(f"📍 '{loc['nome']}' {t('stat.insights3')} {round(100*loc['tot']/totale_q)}%  {t('stat.insights3_end')}")
 
         return insights
 

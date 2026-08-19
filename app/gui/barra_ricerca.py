@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QLineEdit
 from PySide6.QtCore import Signal
 from app.db import location_repo, oggetto_repo
+from app.localization import t
 
 class BarraRicerca(QLineEdit):
     """
@@ -17,7 +18,7 @@ class BarraRicerca(QLineEdit):
 
     def  __init__(self, parent=None):
         super().__init__(parent)
-        self.setPlaceholderText("Search or scan a code...")
+        self.setPlaceholderText(t("search.palceholder"))
         self.setMaximumWidth(300)
         self.setClearButtonEnabled(True)
         self.includi_archiviati = False

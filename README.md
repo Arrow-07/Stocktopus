@@ -54,8 +54,6 @@ Stocktopus was created to provide a clean, intuitive and fully offline alternati
 - 🐍 Python
 - 🖥️ PySide6 (Qt)
 - 🗄️ SQLite
-- 🌱 Git
-- 🐙 GitHub
 
 ---
 

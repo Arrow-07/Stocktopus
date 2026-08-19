@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QPainter, QColor, QPen, QFont
 from PySide6.QtCore import Qt, QRectF
+from app.localization import t
 
 class GraficoTorta(QWidget):
     def __init__(self, dati: list[tuple], parent=None):
@@ -18,7 +19,7 @@ class GraficoTorta(QWidget):
             painter.setPen(QColor("#94A3B8"))
             painter.setFont(QFont("Segoe UI", 10))
             painter.drawText(
-                self.rect(), Qt.AlignCenter, "No Avaible Data"
+                self.rect(), Qt.AlignCenter, t("errors.not_avaible_data")
             )
             return
 

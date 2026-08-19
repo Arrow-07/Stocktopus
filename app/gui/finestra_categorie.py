@@ -6,11 +6,11 @@ from PySide6.QtCore import Qt
 from app.db import categoria_repo
 from app.db.categoria_repo import CategoriaHasChildrenError, CategoriaHasItemsError
 from app.gui.form_categoria import FormCategoria
-
+from app.localization import t
 class FinestraCategorie(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Manage Categories")
+        self.setWindowTitle(t("categries.manage"))
         self.resize(380, 480)
         layout = QVBoxLayout(self)
 
@@ -18,7 +18,7 @@ class FinestraCategorie(QDialog):
         layout.addWidget(self.lista)
 
         riga = QHBoxLayout()
-        for testo, handler in (("New", self._nuova), ("Edit", self._modifica), ("Delete", self._elimina)):
+        for testo, handler in ((t("common.new"), self._nuova), (t("common.edit"), self._modifica), (t("common.delete"), self._elimina)):
             b = QPushButton(testo)
             b.clicked.connect(handler)
             riga.addWidget(b)
@@ -46,7 +46,7 @@ class FinestraCategorie(QDialog):
     def _modifica(self):
         item = self.lista.currentItem()
         if not item:
-            QMessageBox.warning(self, "Error", "Select a category to edit")
+            QMessageBox.warning(self, t("common.error"), t("errors.sel_cat_edit"))
             return
         if FormCategoria(self, id_categoria=item.data(Qt.UserRole)).exec():
             self._ricarica()
@@ -54,7 +54,7 @@ class FinestraCategorie(QDialog):
     def _elimina(self):
         item = self.lista.currentItem()
         if not item:
-            QMessageBox.warning(self, "Error", "Select a category to delete")
+            QMessageBox.warning(self, t("common.error"), t("errors.sel_cat_del"))
             return
         id_cat = item.data(Qt.UserRole)
         try:
@@ -62,19 +62,19 @@ class FinestraCategorie(QDialog):
             self._ricarica()
             return
         except CategoriaHasItemsError as errore:
-            QMessageBox.critical(self, "Cannot Delete", str(errore))
+            QMessageBox.critical(self, t("common.cant_delete"), str(errore))
             return
         except CategoriaHasChildrenError:
             pass
         except Exception as errore:
-            QMessageBox.critical(self, "Error", str(errore))
+            QMessageBox.critical(self, t("common.error"), str(errore))
             return
         
         box = QMessageBox(self)
-        box.setText("This category contains sub-categories. What do you want to do?")
-        b_elimina = box.addButton("Delete All", QMessageBox.AcceptRole)
+        box.setText(t("errors.cat_has_children"))
+        b_elimina = box.addButton(t("errors.del_all"), QMessageBox.AcceptRole)
         #b_elimina.setObjectName("btnCancel")
-        b_sposta = box.addButton("Move children up", QMessageBox.ActionRole)
+        b_sposta = box.addButton(t("errors.mov_children"), QMessageBox.ActionRole)
         box.addButton("Cancel", QMessageBox.RejectRole)
         box.exec()
 
@@ -86,13 +86,13 @@ class FinestraCategorie(QDialog):
             else:
                 return
         except CategoriaHasItemsError as errore:
-            QMessageBox.critical(self, "Cannot delete", str(errore))
+            QMessageBox.critical(self, t("common.cant_delete"), str(errore))
             return
         except CategoriaHasChildrenError as errore:
-            QMessageBox.critical(self, "Cannot delete", str(errore))
+            QMessageBox.critical(self, t("common.cant_delete"), str(errore))
             return
         except Exception as errore:
-            QMessageBox.critical(self, "Error", str(errore))
+            QMessageBox.critical(self, t("common.error"), str(errore))
             return
         
         self._ricarica()

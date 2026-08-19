@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.db import location_repo
-
+from app.localization import t
 class FormLocation(QDialog):
     """
     Form di creazione per una nuova location. id_genitore_preselezionato,
@@ -13,30 +13,30 @@ class FormLocation(QDialog):
 
     def __init__(self, parent = None, id_genitore_preselezionato: int | None = None, id_location = None):
         super().__init__(parent)
-        self.setWindowTitle("Edit location" if id_location else "Create new Location")
-        self.setMinimumWidth(350)
+        self.setWindowTitle(t("locations.edit") if id_location else t("locations.new"))
+        self.setMinimumWidth(400)
 
         self.id_location = id_location
 
         layout = QFormLayout(self)
 
         self.campo_nome = QLineEdit()
-        layout.addRow("Name*:", self.campo_nome)
+        layout.addRow(t("gui.name") + "*:", self.campo_nome)
 
         self.campo_tipo = QLineEdit()
-        self.campo_tipo.setPlaceholderText("e.g. room, cabinet, drawer, compartment")
-        layout.addRow("Type:*", self.campo_tipo)
+        self.campo_tipo.setPlaceholderText(t("pannel.example_abbreviation") + t("gui.placeholder_type_loc") )
+        layout.addRow(t("common.type") + ":*", self.campo_tipo)
 
         self.campo_descrizione = QLineEdit()
-        layout.addRow("Description:", self.campo_descrizione)
+        layout.addRow(t("pannel.des"), self.campo_descrizione)
 
         self.combo_genitore = QComboBox()
         self._popola_combo_genitore(id_genitore_preselezionato)
-        layout.addRow("Parent location:", self.combo_genitore)
+        layout.addRow(t("pannel.parent_loc"), self.combo_genitore)
 
         riga_bottoni = QHBoxLayout()
-        bottone_salva = QPushButton("Save")
-        bottone_annulla = QPushButton("Cancel")
+        bottone_salva = QPushButton(t("common.save"))
+        bottone_annulla = QPushButton(t("common.cancel"))
         bottone_salva.setObjectName("btnSave")
         bottone_annulla.setObjectName("btnCancel")
         bottone_salva.clicked.connect(self._on_salva)
@@ -49,7 +49,7 @@ class FormLocation(QDialog):
             self._precompila(id_location)
 
     def _popola_combo_genitore(self, id_preselezionato: int | None):
-        self.combo_genitore.addItem("-- None (Root Level) --", None)
+        self.combo_genitore.addItem(t("gui.none"), None)
         indice_da_selezionare = 0
         for id_loc, testo, profondita in self._elenco_flat():
             self.combo_genitore.addItem("    " * profondita + testo, id_loc)
@@ -83,10 +83,10 @@ class FormLocation(QDialog):
         tipo = self.campo_tipo.text().strip()
 
         if not nome:
-            QMessageBox.warning(self, "Missing Field", "Name is Required!")
+            QMessageBox.warning(self, t("errors.missing_field"), t("errors.name_req"))
             return
         if not tipo:
-            QMessageBox.warning(self, "Missing Field", "Type is Required!")
+            QMessageBox.warning(self, t("errors.missing_field"), t("errors.type_req"))
             return
 
         descrizione = self.campo_descrizione.text().strip() or None
@@ -98,7 +98,7 @@ class FormLocation(QDialog):
             else:
                 location_repo.crea_location(nome, tipo, descrizione, id_genitore)
         except Exception as errore:
-            QMessageBox.critical(self, "Error while SAVING", str(errore))
+            QMessageBox.critical(self, t("errors.error_while_saving"), str(errore))
             return
 
         self.accept()

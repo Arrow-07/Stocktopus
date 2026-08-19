@@ -1,0 +1,1 @@
+from .translator import t, carica_lingua, lingua_corrente

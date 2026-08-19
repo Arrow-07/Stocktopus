@@ -14,11 +14,13 @@ from app.gui.barra_ricerca import BarraRicerca
 from app.codes import servizio_codici, foglio_di_stampa
 from app.gui.finestra_dashboard import FinestraDashboard
 from app.gui.finestra_categorie import FinestraCategorie
+from app.localization import t
+
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Stocktopus")
+        self.setWindowTitle(t("app.name"))
         self.resize(1280,800)
         self.showMaximized()
 
@@ -51,11 +53,11 @@ class FinestraPrincipale(QMainWindow):
 
 
         toolbar = self.addToolBar("Ricerca")
-        toolbar.addAction("+ New item", self._apri_form_nuovo_oggetto)
-        toolbar.addAction("+ New location", self._apri_form_nuova_location)
-        toolbar.addAction("+ New category", self._apri_form_categoria)
-        toolbar.addAction("⚠ Missing items", self._mostra_esauriti)
-        toolbar.addAction("📊 Statistics", self._apri_dashboard)
+        toolbar.addAction("+ " + t("item.new"), self._apri_form_nuovo_oggetto)
+        toolbar.addAction("+ " + t("locations.new"), self._apri_form_nuova_location)
+        toolbar.addAction("+ " + t("categories.new"), self._apri_form_categoria)
+        toolbar.addAction("⚠ " + t("item.missing"), self._mostra_esauriti)
+        toolbar.addAction("📊 " + t("menu.stat"), self._apri_dashboard)
 
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -67,24 +69,24 @@ class FinestraPrincipale(QMainWindow):
         self.barra_ricerca.oggetto_trovato.connect(self._seleziona_oggetto_diretto)
         self.barra_ricerca.risultati_multipli.connect(self._mostra_risultati_ricerca)
         self.barra_ricerca.nessun_risultato.connect(
-            lambda testo: QMessageBox.information(self, "No Resoult", f"No item or location find for '{testo}'.")
+            lambda testo: QMessageBox.information(self, t("search.no_resoult"), f"{t('search.not_find')} '{testo}'.")
         )
         toolbar.addWidget(self.barra_ricerca)
 
     def _crea_menu(self):
-        menu_file = self.menuBar().addMenu("Inventory")
+        menu_file = self.menuBar().addMenu(t("menu.inventory"))
 
-        menu_file.addAction("New Item", self._apri_form_nuovo_oggetto)
-        menu_file.addAction("New Location", self._apri_form_nuova_location)
+        menu_file.addAction(t("item.new"), self._apri_form_nuovo_oggetto)
+        menu_file.addAction(t("locations.new"), self._apri_form_nuova_location)
         menu_file.addSeparator()
-        menu_file.addAction("Manage Categories...", lambda: FinestraCategorie(self).exec())
+        menu_file.addAction(t("categories.manage") + " ...", lambda: FinestraCategorie(self).exec())
         
-        menu_vai = self.menuBar().addMenu("Go To")
-        menu_vai.addAction("⚠ Missing items", self._mostra_esauriti)
+        menu_vai = self.menuBar().addMenu(t("menu.go_to"))
+        menu_vai.addAction("⚠ " + t("item.missing"), self._mostra_esauriti)
 
-        menu_report = self.menuBar().addMenu("Codes")
-        menu_report.addAction("Print Location Codes", self._apri_stampa_location)
-        menu_report.addAction("Print Category Codes", self._apri_stampa_categoria)
+        menu_report = self.menuBar().addMenu(t("codes.title"))
+        menu_report.addAction(t("codes.print_loc"), self._apri_stampa_location)
+        menu_report.addAction(t("codes.print_cat"), self._apri_stampa_categoria)
 
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
@@ -144,21 +146,21 @@ class FinestraPrincipale(QMainWindow):
         if id_location is None:
             return
         menu = QMenu(self)
-        menu.addAction("Edit", lambda: self._apri_form_modifica_location(id_location))
-        menu.addAction("Delete", lambda: self._gestisci_eliminazione_location(id_location))
+        menu.addAction(t("locations.edit"), lambda: self._apri_form_modifica_location(id_location))
+        menu.addAction(t("locations.delete"), lambda: self._gestisci_eliminazione_location(id_location))
         menu.addSeparator()
-        menu.addAction("New Item here", lambda: FormOggetto(self, id_location).exec() and self._aggiorna_tabella_oggetti(id_location))
-        menu.addAction("New sub-location", lambda: self._apri_form_nuova_location_con_genitore(id_location))
+        menu.addAction(t("locations.new_item_here"), lambda: FormOggetto(self, id_location).exec() and self._aggiorna_tabella_oggetti(id_location))
+        menu.addAction(t("locations.new_children"), lambda: self._apri_form_nuova_location_con_genitore(id_location))
         menu.addSeparator()
 
         codice = codice_repo.leggi_codice_location(id_location)
 
         if codice is None:
-            menu.addAction("Generate Location Code", lambda: self._genera_codice_location(id_location))
+            menu.addAction(t("codes.gen_loc_code"), lambda: self._genera_codice_location(id_location))
         else:
-            menu.addAction("Regenerate Location Code", lambda: self._rigenera_codice_location(id_location))
+            menu.addAction(t("codes.regen_loc_code"), lambda: self._rigenera_codice_location(id_location))
 
-        menu.addAction("Print Location Code", lambda: self._stampa_codice_location(id_location))
+        menu.addAction(t("codes.print_cod_loc"), lambda: self._stampa_codice_location(id_location))
         
         menu.exec(self.albero_location.viewport().mapToGlobal(pos))
 
@@ -179,20 +181,20 @@ class FinestraPrincipale(QMainWindow):
             self._ricarica_albero_location()
             return
         except LocationHasItemsError as errore:
-            QMessageBox.critical(self, "Cannot Delete", str(errore))
+            QMessageBox.critical(self, t("common.cant_delete"), str(errore))
             return
         except LocationHasChildrenError:
             pass
         except Exception as errore:
-            QMessageBox.critical(self, "Error", str(errore))
+            QMessageBox.critical(self, t("common.error"), str(errore))
             return
         
         box = QMessageBox(self)
-        box.setText("This location contains sub-locations. What do you want to do?")
-        b_elimina = box.addButton("Delete hierarchy", QMessageBox.AcceptRole)
+        box.setText(t("errors.loc_has_children"))
+        b_elimina = box.addButton(t("errors.del_all"), QMessageBox.AcceptRole)
         b_elimina.setObjectName("btnCancel")
-        b_sposta = box.addButton("Move children up", QMessageBox.ActionRole)
-        box.addButton("Cancel", QMessageBox.RejectRole)
+        b_sposta = box.addButton(t("errors.mov_children"), QMessageBox.ActionRole)
+        box.addButton(t("common.cancel"), QMessageBox.RejectRole)
         box.exec()
 
         try:
@@ -203,9 +205,9 @@ class FinestraPrincipale(QMainWindow):
             else:
                 return
         except LocationHasItemsError as errore:
-            QMessageBox.warning(self, "Cannot delete", str(errore))
+            QMessageBox.warning(self, t("common.cant_delete"), str(errore))
         except LocationHasChildrenError as errore:
-            QMessageBox.critical(self, "Cannot delete", str(errore))
+            QMessageBox.critical(self, t("common.cant_delete"), str(errore))
             return
         self._ricarica_albero_location()
 
@@ -228,7 +230,7 @@ class FinestraPrincipale(QMainWindow):
         # placeholder: aggiunge un figlio finto SOLO se esistono figli veri,
         # così la freccina di espansione compare senza dover caricare tutto subito
         if location_repo.leggi_locations_figlie(location["id"]):
-            placeholder = QStandardItem("expand...")
+            placeholder = QStandardItem(t("common.expand") + " ...")
             placeholder.setEditable(False)
             item.appendRow(placeholder)
         return item
@@ -249,7 +251,7 @@ class FinestraPrincipale(QMainWindow):
         """Se il nodo ha ancora il placeholder finto, lo sostituisce con i figli veri.
         Riutilizzata sia dal click sulla riga sia dal click sulla freccina."""
         # se il nodo ha ancora il placeholder finto, sostituiscilo con i figli veri
-        if item.rowCount() == 1 and item.child(0).text() == "expand...":
+        if item.rowCount() == 1 and item.child(0).text() == (t("common.expand") + " ..."):
             id_location = item.data(Qt.UserRole)
             item.removeRow(0)
             for figlio in location_repo.leggi_locations_figlie(id_location):
@@ -261,7 +263,7 @@ class FinestraPrincipale(QMainWindow):
         layout = QVBoxLayout(contenitore)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.checkbox_mostra_archiviati = QCheckBox("Show archived items")
+        self.checkbox_mostra_archiviati = QCheckBox(t("item.show_archived"))
         self.checkbox_mostra_archiviati.stateChanged.connect(self._on_toggle_archiviati)
         self.checkbox_mostra_archiviati.stateChanged.connect(
             lambda: self.barra_ricerca.imposta_includi_archiviati(self.checkbox_mostra_archiviati.isChecked())
@@ -282,7 +284,7 @@ class FinestraPrincipale(QMainWindow):
         label_imm.setAlignment(Qt.AlignCenter)
 
         label_txt = QLabel(
-            "Select a location from the left tree to view its items"
+            t("gui.central_txt")
         )
         label_txt.setAlignment(Qt.AlignCenter)
         label_txt.setStyleSheet("""
@@ -313,7 +315,7 @@ class FinestraPrincipale(QMainWindow):
     def _crea_tabella_oggetti(self) -> QTableView:
         tabella = QTableView()
         self.modello_oggetti = QStandardItemModel()
-        self.modello_oggetti.setHorizontalHeaderLabels(["Name", "Amount", "Abbreviation"])
+        self.modello_oggetti.setHorizontalHeaderLabels([t("gui.name"), t("gui.amount"), t("gui.abbreviation")])
         tabella.setModel(self.modello_oggetti)
         tabella.setSelectionBehavior(QTableView.SelectRows)
         tabella.setSelectionMode(QTableView.SingleSelection)
@@ -339,7 +341,7 @@ class FinestraPrincipale(QMainWindow):
         layout.setContentsMargins(14, 14, 14, 14)
         layout.setSpacing(12)
 
-        self.label_nessuna_selezione = QLabel("📦\n\nNo item Selected\nSelect an item from the table to view its details")
+        self.label_nessuna_selezione = QLabel(t("gui.void_pannel"))
         self.label_nessuna_selezione.setAlignment(Qt.AlignCenter)
         self.label_nessuna_selezione.setStyleSheet("""
             QLabel {
@@ -412,14 +414,14 @@ class FinestraPrincipale(QMainWindow):
             label.setWordWrap(True)
 
         mantenimento_campi = [
-        ("ID:", self.label_id),
-        ("Category:", self.label_categoria),
-        ("Location:", self.label_location),
-        ("Amount:", self.label_quantita),
-        ("Code:", self.label_abbreviazione),
-        ("Description:", self.label_descrizione),
-        ("Purchase Date:", self.label_data_acquisto),
-        ("Note:", self.label_note),
+        (t("pannel.id"), self.label_id),
+        (t("pannel.cat"), self.label_categoria),
+        (t("pannel.loc"), self.label_location),
+        (t("pannel.amount"), self.label_quantita),
+        (t("pannel.cod"), self.label_abbreviazione),
+        (t("pannel.des"), self.label_descrizione),
+        (t("pannel.date"), self.label_data_acquisto),
+        (t("pannel.note"), self.label_note),
         ]
 
         for idx, (txt, w_label) in enumerate(mantenimento_campi):
@@ -466,11 +468,11 @@ class FinestraPrincipale(QMainWindow):
         griglia_bottoni = QGridLayout()
         griglia_bottoni.setSpacing(8)
 
-        self.bottone_preleva = QPushButton("Retrieve Item")
-        self.bottone_deposita = QPushButton("Store Item")
-        self.bottone_modifica = QPushButton("Edit Item")
-        self.bottone_archivia_ripristina = QPushButton("Archive Item")
-        self.bottone_trasferisci = QPushButton("Transfer Item")
+        self.bottone_preleva = QPushButton(t("pannel.retrive"))
+        self.bottone_deposita = QPushButton(t("pannel.store"))
+        self.bottone_modifica = QPushButton(t("pannel.edit"))
+        self.bottone_archivia_ripristina = QPushButton(t("pannel.archive"))
+        self.bottone_trasferisci = QPushButton(t("pannel.trasfer"))
 
         self.bottone_preleva.clicked.connect(self._on_preleva_cliccato)
         self.bottone_deposita.clicked.connect(self._on_deposita_cliccato)
@@ -542,8 +544,8 @@ class FinestraPrincipale(QMainWindow):
         riga_codice_bottoni = QHBoxLayout()
         riga_codice_bottoni.setSpacing(8)
 
-        self.bottone_genera_codice = QPushButton("Generate Code")
-        self.bottone_stampa_codice = QPushButton("Print Code")
+        self.bottone_genera_codice = QPushButton(t("codes.generete"))
+        self.bottone_stampa_codice = QPushButton(t("codes.print"))
 
         for btn in (self.bottone_genera_codice, self.bottone_stampa_codice):
             btn.setStyleSheet(stile_base_btn)
@@ -585,7 +587,7 @@ class FinestraPrincipale(QMainWindow):
         )
         return scroll
 
-    def _testo_o_placeholder(self, valore, placeholder: str = "No Data")-> str:
+    def _testo_o_placeholder(self, valore, placeholder: str = t("common.no_date"))-> str:
         """Restituisce il valore come stringa, o un testo segnaposto se è None
         o una stringa vuota."""
         if valore is None or valore == "":
@@ -624,14 +626,14 @@ class FinestraPrincipale(QMainWindow):
         self.label_quantita.setText(f"{oggetto['quantita']}{unita}")
 
         self.label_descrizione.setText(
-            self._testo_o_placeholder(oggetto['descrizione'], 'Not available')
+            self._testo_o_placeholder(oggetto['descrizione'], t('errors.not_available'))
         )
 
         self.label_data_acquisto.setText(
-            self._testo_o_placeholder(oggetto['data_acquisto'], 'Unknown')
+            self._testo_o_placeholder(oggetto['data_acquisto'], t('errors.unknown'))
         )
 
-        self.label_note.setText(self._testo_o_placeholder(oggetto['note'], 'Not available'))
+        self.label_note.setText(self._testo_o_placeholder(oggetto['note'], t('errors.not_available')))
 
         #categoria
         if oggetto["id_categoria"] is not None:
@@ -643,10 +645,10 @@ class FinestraPrincipale(QMainWindow):
                     f"background-color: transparent; color: {colore_cat}; font-weight: bold;"
                 )
             else:
-                self.label_categoria.setText("(Deleted)")
+                self.label_categoria.setText(t("errors.deleted"))
                 self.label_categoria.setStyleSheet("color: #EF4444;")
         else:
-            self.label_categoria.setText("Not available")
+            self.label_categoria.setText(t("errors.not_available"))
             self.label_categoria.setStyleSheet("color: #94A3B8;")
 
         #location
@@ -658,10 +660,10 @@ class FinestraPrincipale(QMainWindow):
                 "color: #00ADB5; font-weight: bold;"
                 )
             else:
-                self.label_location.setText("(Deleted)")
+                self.label_location.setText(t("errors.deleted"))
                 self.label_location.setStyleSheet("color: #EF4444;")
         else:
-            self.label_location.setText("Location: Not available")
+            self.label_location.setText(t("locations.title") + ": " + t("errors.not_available"))
             self.label_location.setStyleSheet("color: #94A3B8;")
 
         
@@ -681,7 +683,7 @@ class FinestraPrincipale(QMainWindow):
                 }
             """)
         else:
-            self.label_immagine.setText("📷\nNo Image Available")
+            self.label_immagine.setText(t("errors.img_not_avaible"))
             self.label_immagine.setAlignment(Qt.AlignCenter)
             self.label_immagine.setStyleSheet("""
                 QLabel {
@@ -697,7 +699,7 @@ class FinestraPrincipale(QMainWindow):
 
         #archiviato
         if oggetto["archiviato_il"] is not None:
-            self.label_stato_archiviazione.setText(f"⚠ Archived ({oggetto['archiviato_il']})")
+            self.label_stato_archiviazione.setText(f"⚠ {t('item.archived')} ({oggetto['archiviato_il']})")
             self.label_stato_archiviazione.setStyleSheet("""
                 QLabel {
                     background-color: #7C2D12;
@@ -708,9 +710,9 @@ class FinestraPrincipale(QMainWindow):
                     border-radius: 6px;
                 }
             """)
-            self.bottone_archivia_ripristina.setText("Unarchive")
+            self.bottone_archivia_ripristina.setText(t("item.unarchive"))
         else:
-            self.label_stato_archiviazione.setText("Active")
+            self.label_stato_archiviazione.setText(t("item.active"))
             self.label_stato_archiviazione.setStyleSheet("""
                 QLabel {
                     background-color: #065F46;
@@ -721,7 +723,7 @@ class FinestraPrincipale(QMainWindow):
                     border-radius: 6px;
                 }
             """)
-            self.bottone_archivia_ripristina.setText("Archive")
+            self.bottone_archivia_ripristina.setText(t("pannel.archive_btn"))
 
         #codice stampa + genera
         riga_codice = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato)
@@ -736,9 +738,9 @@ class FinestraPrincipale(QMainWindow):
                 padding: 4px;
                 }
             """)
-            self.bottone_genera_codice.setText("Regenerate Code")
+            self.bottone_genera_codice.setText(t("codes.regenerate"))
         else:
-            self.label_anteprima_codice.setText("No Code")
+            self.label_anteprima_codice.setText(t("codes.no_code"))
             self.label_anteprima_codice.setAlignment(Qt.AlignCenter)
             self.label_anteprima_codice.setStyleSheet("""
                 QLabel {
@@ -748,7 +750,7 @@ class FinestraPrincipale(QMainWindow):
                     color: #64748B;
                 }
             """)            
-            self.bottone_genera_codice.setText("Generate Code")
+            self.bottone_genera_codice.setText(t("codes.generate"))
 
     def _on_archivia_riprisina_cliccato(self):
         oggetto = oggetto_repo.leggi_oggetto(self.id_oggetto_selezionato, include_archiviati=True)
@@ -760,13 +762,13 @@ class FinestraPrincipale(QMainWindow):
             if oggetto["archiviato_il"] is not None:
                 oggetto_repo.ripristina_oggetto(self.id_oggetto_selezionato)
             else:
-                risposta = QMessageBox.question(self, "Confirm", f"Archive '{oggetto['nome']}' ?")
+                risposta = QMessageBox.question(self, t('common.confirm'), f"{t('pannel.archive2')} '{oggetto['nome']}' ?")
                 if risposta != QMessageBox.Yes:
                     return
                 oggetto_repo.elimina_oggetto(self.id_oggetto_selezionato)
 
         except Exception as errore:
-            QMessageBox.critical(self, "Error", str(errore))
+            QMessageBox.critical(self, t("common.error"), str(errore))
             return
         
         self._ricarica_tabella_corrente()
@@ -806,7 +808,7 @@ class FinestraPrincipale(QMainWindow):
         try:
             movimenti_repo.preleva_oggetto(self.id_oggetto_selezionato, quantita)
         except Exception as errore:
-            QMessageBox.warning(self, "Unable to Retrieve Item", str(errore))
+            QMessageBox.warning(self, t("errors.unb_retrive"), str(errore))
             return
 
         self._aggiorna_pannello_dettaglio()
@@ -817,7 +819,7 @@ class FinestraPrincipale(QMainWindow):
         try:
             movimenti_repo.deposita_oggetto(self.id_oggetto_selezionato, quantita)
         except Exception as errore:
-            QMessageBox.warning(self, "Unable to Store Item", str(errore))
+            QMessageBox.warning(self, t("errors.unb_store"), str(errore))
             return
     
         self._aggiorna_pannello_dettaglio()
@@ -826,11 +828,11 @@ class FinestraPrincipale(QMainWindow):
     def _on_trasferisci_cliccato(self):
         tutte = self._elenco_location_flat_globale()
         if not tutte:
-            QMessageBox.information(self, "No Location", "No locations available.")
+            QMessageBox.information(self, t("errors.no_location"), t("errors.no_location_avaible"))
             return
 
         nomi = [f"{'   ' * p}{n}" for _, n, p in tutte]
-        scelta, ok = QInputDialog.getItem(self, "Transfer item", "New Location:", nomi, editable=False)
+        scelta, ok = QInputDialog.getItem(self, t("pannel.trasfer"),  t("locations.new") + ": ", nomi, editable=False)
         if not ok :
             return
         indice = nomi.index(scelta)
@@ -839,7 +841,7 @@ class FinestraPrincipale(QMainWindow):
         try:
             movimenti_repo.trasferisci_oggetto(self.id_oggetto_selezionato, id_destinazione)
         except Exception as errore:
-            QMessageBox.critical(self, "Error:", str(errore))
+            QMessageBox.critical(self, t("common.error"), str(errore))
             return
 
         self._aggiorna_pannello_dettaglio()
@@ -865,7 +867,7 @@ class FinestraPrincipale(QMainWindow):
         except Exception as errore:
             QMessageBox.critical(
                 self,
-                "Error",
+                t("common.error"),
                 str(errore)
             )
             return
@@ -873,9 +875,8 @@ class FinestraPrincipale(QMainWindow):
     def _rigenera_codice_location(self, id_location: int):
         risposta = QMessageBox.question(
             self,
-            "Regenerate Location Code",
-            "The current location code and its image will be deleted.\n\n"
-            "Do you want to regenerate it?",
+            t("codes.regen_loc_code"),
+            t("errors.warn_regen_loc"),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -893,7 +894,7 @@ class FinestraPrincipale(QMainWindow):
         except Exception as errore:
             QMessageBox.critical(
                 self,
-                "Error",
+                t("common.error"),
                 str(errore)
             )
             return
@@ -910,7 +911,7 @@ class FinestraPrincipale(QMainWindow):
         except Exception as errore:
             QMessageBox.critical(
                 self,
-                "Error",
+                t("common.error"),
                 str(errore)
             )
     
@@ -921,8 +922,8 @@ class FinestraPrincipale(QMainWindow):
         if esiste:
             risposta = QMessageBox.question(
                 self,
-                "Regenerete code",
-                "The current code and its immage will be deleted\n Do you want to regenerate it?",
+                t("codes.regenerate"),
+                t("errors.warn_regen_code"),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
@@ -934,19 +935,19 @@ class FinestraPrincipale(QMainWindow):
             else:
                 servizio_codici.genera_codice_oggetto(self.id_oggetto_selezionato, tipo)
         except Exception as errore:
-            QMessageBox.critical(self, "Error", str(errore))
+            QMessageBox.critical(self, t("common.error"), str(errore))
             return
         self._aggiorna_pannello_dettaglio()
 
     def _stampa_codici(self, righe_codice: list[dict]):
         if not righe_codice:
-            QMessageBox.information(self, "No Item", "No item codes to print.")
+            QMessageBox.information(self, t("errors.no_item"), t("errors.no_item_code_print"))
             return
-        cartella = QFileDialog.getExistingDirectory(self, "Save code label sheet as...")
+        cartella = QFileDialog.getExistingDirectory(self, t("gui.save_code_sheet"))
         if not cartella:
             return
         percorsi = foglio_di_stampa.crea_fogli_etichette(righe_codice, cartella_destinazione=Path(cartella))
-        QMessageBox.information(self, "Sheet created", f"Created {len(percorsi)} label sheet{'s' if len(percorsi) !=1 else ' '}.")
+        QMessageBox.information(self, t("gui.sheet_created"), f"{t('gui.created')} {len(percorsi)} {t('gui.label_sheets') if len(percorsi) !=1 else t('gui.label_sheet')}.")
 
     def _on_stampa_etichetta_cliccato(self):
         riga = servizio_codici.ottieni_o_genera_codice_oggetto(self.id_oggetto_selezionato)
@@ -954,7 +955,7 @@ class FinestraPrincipale(QMainWindow):
 
     def _apri_stampa_location(self):
         if not getattr(self, "id_location_corrente", None):
-            QMessageBox.information(self, "No location", "Please Select a location First.")
+            QMessageBox.information(self, t("errors.no_location"), t("errors.select_loc_first"))
             return
         oggetti = oggetto_repo.leggi_oggetti_per_location(self.id_location_corrente)
         righe = [servizio_codici.ottieni_o_genera_codice_oggetto(o["id"]) for o in oggetti]
@@ -970,10 +971,10 @@ class FinestraPrincipale(QMainWindow):
     def _apri_stampa_categoria(self):
         tutte = self._tutte_categorie_flat()
         if not tutte:
-            QMessageBox.information(self, "No Category", "No Category Find.")
+            QMessageBox.information(self, t("errors.no_category"), t("errors.no_category_find"))
             return
         nomi = [c["nome"] for c in tutte]
-        nome, ok = QInputDialog.getItem(self, "Print by category", "Category:", nomi, editable=False)
+        nome, ok = QInputDialog.getItem(self, t("codes.print_cat"), t("pannel.cat"), nomi, editable=False)
         if not ok:
             return
         id_cat = next(c["id"] for c in tutte if c["nome"] == nome)
@@ -1023,8 +1024,8 @@ class FinestraPrincipale(QMainWindow):
         indovinare quale aprire — stesso principio già applicato agli oggetti."""
         nomi = "\n".join(f"- {loc['nome']} ({loc['tipo']})" for loc in locations)
         QMessageBox.information(
-            self, "Multiple locations found:",
-            f"found: {len(locations)} matching locations were found:\n{nomi}\n\nRefine your search to open one."
+            self, t("search.multiple_loc"),
+            f"{t('search.found')}: {len(locations)} {t('search.matching_locations')}: \n{nomi}\n\n{t('search.refine_your_shearch')}"
         )
 
     def _seleziona_oggetto_diretto(self, oggetto: dict):

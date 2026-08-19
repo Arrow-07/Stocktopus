@@ -20,12 +20,13 @@ from app.gui.widgets.card_grafico import CardGrafico
 from app.gui.widgets.card_kpi import CardKPI
 from app.stats import stats_repo
 from app.gui.widgets.grafico_torta import GraficoTorta
+from app.localization import t
 
 class FinestraDashboard(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Stats - Stocktopus")
+        self.setWindowTitle(t("stat.main"))
 
         # Dimensionamento dinamico basato sullo schermo dell'utente
         screen = QGuiApplication.primaryScreen().availableGeometry()
@@ -44,16 +45,16 @@ class FinestraDashboard(QMainWindow):
         riga_header = QHBoxLayout()
         box_titolo = QVBoxLayout()
 
-        titolo = QLabel("Stocktopus statistics")
+        titolo = QLabel(t("stat.title"))
         titolo.setStyleSheet(
             "font-size: 20px; font-weight: bold; color: #FFFFFF;"
         )
 
-        sottotitolo = QLabel("Inventory & Activity Overview")
+        sottotitolo = QLabel(t("stat.title_2"))
         sottotitolo.setStyleSheet("color: #94A3B8; font-size: 12px;")
 
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-        lbl_updated = QLabel(f"⏱ Updated: {now_str}")
+        lbl_updated = QLabel(f"{t('stat.update')} {now_str}")
         lbl_updated.setStyleSheet(
             "color: #00ADB5; font-size: 10.5pt; font-weight: 600; margin-top:"
             " 2px;"
@@ -76,7 +77,7 @@ class FinestraDashboard(QMainWindow):
         riga_grafici_1.addWidget(
             CardGrafico(
                 self._grafico_barre(
-                    "Most Retrieved Items",
+                    t("stat.most_retrive_item"),
                     stats_repo.oggetti_piu_prelevati(),
                     "nome",
                     "totale",
@@ -89,7 +90,7 @@ class FinestraDashboard(QMainWindow):
         riga_grafici_1.addWidget(
             CardGrafico(
                 self._grafico_barre(
-                    "Most Active Locations",
+                    t("stat.most_active_loc"),
                     stats_repo.location_piu_attive(),
                     "nome",
                     "totale",
@@ -107,7 +108,7 @@ class FinestraDashboard(QMainWindow):
         riga_grafici_2.addWidget(
             CardGrafico(
                 self._grafico_barre(
-                    "Category Breakdown",
+                    t("stat.cat_brkdown"),
                     stats_repo.distribuzione_categorie(),
                     "nome",
                     "totale",
@@ -145,18 +146,12 @@ class FinestraDashboard(QMainWindow):
         griglia.setSpacing(10)
 
         card_info = [
-            ("📦", "Active Item", dati["oggetti"], "Currently Available", "#00ADB5"),
-            ("🗑️", "Archived Item", dati["archiviati"], "In Trash", "#FF9800"),
-            (
-                "📊",
-                "Total Quantity",
-                dati["quantita_totale"],
-                "Total Units",
-                "#4CAF50",
-            ),
-            ("📍", "Location", dati["location"], "Total", "#3A9DF8"),
-            ("🏷️", "Category", dati["categorie"], "Total", "#A855F7"),
-            ("⚡", "Movements", dati["movimenti"], "Recorded", "#EC4899"),
+            ("📦", t("stat.active_item"), dati["oggetti"], t("stat.curr_ava"), "#00ADB5"),
+            ("🗑️", t("stat.archived_item"), dati["archiviati"], t("stat.in_trash"), "#FF9800"),
+            ("📊", t("stat.tot_item"), dati["quantita_totale"], t("stat.tot_unit"), "#4CAF50"),
+            ("📍", t("locations.title"), dati["location"], t("stat.tot"), "#3A9DF8"),
+            ("🏷️", t("categories.title"), dati["categorie"], t("stat.tot"), "#A855F7"),
+            ("⚡", t("stat.mov"), dati["movimenti"], t("stat.rec"), "#EC4899"),
         ]
 
         for i, (icona, titolo, valore, desc, colore) in enumerate(card_info):
@@ -185,7 +180,6 @@ class FinestraDashboard(QMainWindow):
         plot.setTitle(titolo, color="#FFFFFF", size="11pt", bold=True)
         plot.showGrid(x=False, y=True, alpha=0.15)
 
-        # Impostazione corretta dei margini del grafico tramite PlotItem
         plot.getPlotItem().setContentsMargins(10, 10, 10, 10)
 
         if not dati:
@@ -228,7 +222,7 @@ class FinestraDashboard(QMainWindow):
         plot.setBackground("#222733")
         plot.setMinimumHeight(300)
         plot.setTitle(
-            "Movement Trends (30 Days)", color="#FFFFFF", size="11pt", bold=True
+            t("stat.mov_trend"), color="#FFFFFF", size="11pt", bold=True
         )
         plot.showGrid(x=True, y=True, alpha=0.12)
         plot.getPlotItem().setContentsMargins(10, 10, 10, 10)
@@ -266,19 +260,24 @@ class FinestraDashboard(QMainWindow):
 
     def _grafico_torta_movimenti(self):
         colori = {
-            "prelevio": "#00ADB5",
             "prelievo": "#00ADB5",
-            "deposito": "#4CAF50",
-            "trasferimento": "#3A9DF8",
+            "deposito": "#44EB2D",
+            "trasferimento": "#F8BC3A",
         }
+        tipi_mov = {
+            "prelievo": t("stat.retrive"), 
+            "deposito": t("stat.store"), 
+            "trasferimento": t("stat.trasf")
+        }
+                
         dati = stats_repo.distribuzione_tipi_movimento()
-        dati_grafico = [(d["tipo_movimento"], d["totale"], colori.get(d["tipo_movimento"])) for d in dati]
+        dati_grafico = [(tipi_mov.get(d["tipo_movimento"]), d["totale"], colori.get(d["tipo_movimento"])) for d in dati]
 
         box = QWidget()
         layout = QVBoxLayout(box)
         layout.setContentsMargins(12, 12, 12, 12)
 
-        titolo = QLabel("Movements Distribution")
+        titolo = QLabel(t("stat.mov_dist"))
         titolo.setStyleSheet("color: #FFFFFF; font-size: 11pt; font-weight: bold; margin-bottom: 4px;")
         layout.addWidget(titolo)
 
@@ -292,7 +291,7 @@ class FinestraDashboard(QMainWindow):
         layout = QVBoxLayout(box)
         layout.setContentsMargins(12, 12, 12, 12)
 
-        titolo = QLabel("Recent Activity")
+        titolo = QLabel(t("stat.recent_act"))
         titolo.setStyleSheet("font-size: 11pt; font-weight: bold; margin-bottom: 4px;")
         layout.addWidget(titolo)
 
@@ -322,9 +321,11 @@ class FinestraDashboard(QMainWindow):
         """)
 
         icone = {"prelievo": "🟢", "deposito": "🔵", "trasferimento": "🟡"}
+        tipi_mov = {"prelievo": t("stat.retrive"), "deposito": t("stat.store"), "trasferimento": t("stat.trasf")}
         for riga in stats_repo.attivita_recenti(10):
             icona = icone.get(riga["tipo_movimento"], "⚪")
-            testo = f"{icona} {riga['tipo_movimento'].capitalize()} - {riga['nome_oggetto'] or '(deleted item)'}"
+            tipo_mov = tipi_mov.get(riga["tipo_movimento"], "???")
+            testo = f"{icona} {tipo_mov.capitalize()} - {riga['nome_oggetto'] or t('stat.del_itm')}"
             item = QListWidgetItem(testo)
             lista.addItem(item)
 
@@ -344,7 +345,7 @@ class FinestraDashboard(QMainWindow):
         layout_box.setContentsMargins(16, 16, 16, 16)
         layout_box.setSpacing(10)
         
-        titolo = QLabel("💡 Insights & Analytics")
+        titolo = QLabel(t("stat.insights"))
         titolo.setStyleSheet("color: #FFFFFF; font-weight: bold; font-size: 11pt; margin-bottom: 4px;")
         layout_box.addWidget(titolo)
 
