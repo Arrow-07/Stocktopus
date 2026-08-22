@@ -26,3 +26,22 @@ def salva(config: dict) -> None:
     FILE_CONFIG.parent.mkdir(parents=True, exist_ok=True)
     with open(FILE_CONFIG, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
+
+def esporta_config(percorso: str) -> None:
+    with open(percorso, "w", encoding="utf-8") as f:
+        json.dump(
+            carica(),
+            f,
+            indent=2,
+            ensure_ascii=False
+        )
+
+
+def importa_config(percorso: str) -> dict:
+    with open(percorso, "r", encoding="utf-8") as f:
+        dati = json.load(f)
+
+    config = {**DEFAULT, **dati}
+    salva(config)
+
+    return config

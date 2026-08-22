@@ -375,3 +375,61 @@ def leggi_oggetti_esauriti (include_archiviati: bool = False) -> list[dict]:
     finally:
         connDB.close()
 
+def importa_oggetto(
+    nome: str,
+    abbreviazione: str,
+    quantita: int = 0,
+    unita_di_misura: str = "pz",
+    id_categoria: int | None = None,
+    id_location: int | None = None,
+    descrizione: str | None = None,
+    data_acquisto: str | None = None,
+    note: str | None = None,
+    immagine_path: str | None = None,
+    archiviato_il: str | None = None,
+) -> int:
+
+    connDB = ConnectDB()
+
+    try:
+        cur = connDB.execute(
+            """
+            INSERT INTO oggetto (
+                nome,
+                abbreviazione,
+                quantita,
+                unita_misura,
+                id_categoria,
+                id_location,
+                descrizione,
+                data_acquisto,
+                note,
+                immagine_path,
+                archiviato_il
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                nome,
+                abbreviazione,
+                quantita,
+                unita_di_misura,
+                id_categoria,
+                id_location,
+                descrizione,
+                data_acquisto,
+                note,
+                immagine_path,
+                archiviato_il,
+            )
+        )
+
+        connDB.commit()
+        return cur.lastrowid
+
+    except Exception:
+        connDB.rollback()
+        raise
+
+    finally:
+        connDB.close()

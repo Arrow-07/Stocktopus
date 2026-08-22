@@ -39,7 +39,10 @@
         "stat": "Statistiche",
         "inventory": "Inventario",
         "go_to": "Vai a",
-        "sett": "Impostazioni"
+        "sett": "Impostazioni",
+        "import_export": "Importa / Esporta",
+        "import": "Importa",
+        "export": "Esporta"
     },
 
     "locations": {
@@ -208,6 +211,22 @@
         "dark": "Scuro",
         "light": "Chiaro",
         "qr": "CODICE QR",
-        "barcode": "CODICE A BARRE"
+        "barcode": "CODICE A BARRE",
+        "restart": "Le impostazioni modificate diventeranno operative dopo il riavvio dell'applicazione."
+    },
+
+    "import": {
+        "locations": "Importa posizioni",
+        "categories": "Importa categorie",
+        "objects": "Importa oggetti",
+        "settings": "Importa impostazioni"
+    },
+
+    "export": {
+        "locations": "Esporta posizioni",
+        "categories": "Esporta categorie",
+        "objects": "Esporta oggetti",
+        "movements": "Esporta movimenti",
+        "settings": "Esporta impostazioni"
     }
 }

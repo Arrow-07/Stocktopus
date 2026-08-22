@@ -5,6 +5,7 @@ from app.db.initdb import InitDB
 from app.gui.finestra_princ import FinestraPrincipale
 from app.localization import t, carica_lingua
 from app.config import impostazioni
+from app.logic.tema import applica_tema
 
 if __name__ == "__main__":
     InitDB()
@@ -24,6 +25,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    applica_tema(impostazioni.carica().get("tema", "scuro"))
     app.setWindowIcon(QIcon("app/assets/stocktopus.ico"))
     window = FinestraPrincipale()
     window.setWindowIcon(QIcon("app/assets/stocktopus.ico"))

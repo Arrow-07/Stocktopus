@@ -36,7 +36,10 @@
         "stat": "Estadísticas",
         "inventory": "Inventario",
         "go_to": "Ir a",
-        "sett": "Configuración"
+        "sett": "Configuración",
+        "import_export": "Importar / Exportar",
+        "import": "Importar",
+        "export": "Exportar"
     },
     "locations": {
         "title": "Ubicación",
@@ -199,6 +202,22 @@
         "dark": "Oscuro",
         "light": "Claro",
         "qr": "CÓDIGO QR",
-        "barcode": "CÓDIGO DE BARRAS"
+        "barcode": "CÓDIGO DE BARRAS",
+        "restart": "La configuración modificada será efectiva después de reiniciar la aplicación."
+    },
+
+    "import": {
+        "locations": "Importar ubicaciones",
+        "categories": "Importar categorías",
+        "objects": "Importar objetos",
+        "settings": "Importar configuración"
+    },
+
+    "export": {
+        "locations": "Exportar ubicaciones",
+        "categories": "Exportar categorías",
+        "objects": "Exportar objetos",
+        "movements": "Exportar movimientos",
+        "settings": "Exportar configuración"
     }
 }

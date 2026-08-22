@@ -1,7 +1,9 @@
-from PySide6.QtWidgets import (QSpinBox, QDialog, QFormLayout, QComboBox, QCheckBox, QPushButton, QLineEdit, QHBoxLayout, QFileDialog)
+from PySide6.QtWidgets import (QSpinBox, QDialog, QFormLayout, QComboBox, QCheckBox, QPushButton, QLineEdit, QHBoxLayout, QFileDialog, QLabel)
+from PySide6.QtCore import Qt
 from app.config import impostazioni
 from app.localization import t, lingua_corrente
 from pathlib import Path
+from app.logic.tema import applica_tema
 
 LINGUE = Path(__file__).parent.parent / "localization" / "languages"
 
@@ -13,16 +15,22 @@ class FinestraImpostazioni(QDialog):
         self.config = impostazioni.carica()
 
         layout = QFormLayout(self)
+        testo = QLabel(t("sett.restart"))
+        testo.setAlignment(Qt.AlignCenter)
+        testo.setStyleSheet("""
+            font-weight: bold;
+            color: red;
+        """)
+        layout.addRow(testo)
+        # self.combo_tema = QComboBox()
+        # self.combo_tema.addItem(t("sett.dark"), "dark")
+        # self.combo_tema.addItem(t("sett.light"), "light")
 
-        self.combo_tema = QComboBox()
-        self.combo_tema.addItem(t("sett.dark"), "dark")
-        self.combo_tema.addItem(t("sett.light"), "light")
+        # indice = self.combo_tema.findData(self.config["tema"])
+        # if indice >= 0:
+        #     self.combo_tema.setCurrentIndex(indice)
 
-        indice = self.combo_tema.findData(self.config["tema"])
-        if indice >= 0:
-            self.combo_tema.setCurrentIndex(indice)
-
-        layout.addRow(t("sett.theme"), self.combo_tema)
+        # layout.addRow(t("sett.theme"), self.combo_tema)
 
         self.combo_tipo_codice = QComboBox()
         self.combo_tipo_codice.addItem(t("sett.qr"), "qr")
@@ -104,7 +112,7 @@ class FinestraImpostazioni(QDialog):
             self.campo_backup.setText(cartella)
 
     def _on_salva(self):
-        self.config["tema"] = self.combo_tema.currentData()
+        # self.config["tema"] = self.combo_tema.currentData()
         self.config["tipo_codice_default"] = self.combo_tipo_codice.currentData()
         self.config["genera_codice_automatico"] = self.check_auto_code.isChecked()
         self.config["lingua"] = self.combo_lingua.currentText()
@@ -114,4 +122,5 @@ class FinestraImpostazioni(QDialog):
         self.config["backup_intervallo"] = self.spin_backup_intervallo.value()
         self.config["backup_massimo"] = self.spin_backup_massimo.value()
         impostazioni.salva(self.config)
+        applica_tema(self.config["tema"])
         self.accept()

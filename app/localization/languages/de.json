@@ -36,7 +36,10 @@
         "stat": "Statistiken",
         "inventory": "Inventar",
         "go_to": "Gehe zu",
-        "sett": "Einstellungen"
+        "sett": "Einstellungen",
+        "import_export": "Importieren / Exportieren",
+        "import": "Importieren",
+        "export": "Exportieren"
     },
     "locations": {
         "title": "Lagerort",
@@ -199,6 +202,22 @@
         "dark": "Dunkel",
         "light": "Hell",
         "qr": "QR-CODE",
-        "barcode": "BARCODE"
+        "barcode": "BARCODE",
+        "restart": "Die geänderten Einstellungen werden nach dem Neustart der Anwendung wirksam."
+    },
+
+    "import": {
+        "locations": "Lagerorte importieren",
+        "categories": "Kategorien importieren",
+        "objects": "Objekte importieren",
+        "settings": "Einstellungen importieren"
+    },
+
+    "export": {
+        "locations": "Lagerorte exportieren",
+        "categories": "Kategorien exportieren",
+        "objects": "Objekte exportieren",
+        "movements": "Bewegungen exportieren",
+        "settings": "Einstellungen exportieren"
     }
 }

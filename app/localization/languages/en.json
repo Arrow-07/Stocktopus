@@ -39,8 +39,10 @@
         "stat": "Statistics",
         "inventory": "Inventory",
         "go_to": "Go to",
-        "sett": "Settings"
-
+        "sett": "Settings",
+        "import_export": "Import / Export",
+        "import": "Import",
+        "export": "Export"
     },
 
     "locations": {
@@ -212,6 +214,22 @@
         "dark": "Dark",
         "light": "Light",
         "qr": "QR CODE",
-        "barcode": "BARCODE"
+        "barcode": "BARCODE",
+        "restart": "The modified settings will take effect after restarting the application."
+    },
+
+    "import": {
+        "locations": "Import locations",
+        "categories": "Import categories",
+        "objects": "Import objects",
+        "settings": "Import settings"
+    },
+
+    "export": {
+        "locations": "Export locations",
+        "categories": "Export categories",
+        "objects": "Export objects",
+        "movements": "Export movements",
+        "settings": "Export settings"
     }
 }

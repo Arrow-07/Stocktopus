@@ -5,7 +5,7 @@ QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
 from PySide6.QtCore import Qt, QTimer
 from pathlib import Path
-from app.db import location_repo, oggetto_repo, movimenti_repo, categoria_repo, codice_repo
+from app.db import  location_repo, oggetto_repo, movimenti_repo, categoria_repo, codice_repo
 from app.db.backup import crea_backup
 from app.db.location_repo import LocationHasChildrenError, LocationHasItemsError
 from app.gui.form_location import FormLocation
@@ -18,7 +18,7 @@ from app.gui.finestra_categorie import FinestraCategorie
 from app.gui.finestra_impostazioni import FinestraImpostazioni
 from app.localization import t
 from app.config import impostazioni
-
+from app.data_io import csv_io
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
@@ -37,13 +37,6 @@ class FinestraPrincipale(QMainWindow):
             and self.config["cartella_backup"]
         ):
             self._avvia_timer_backup()
-
-        PATH_QSS = Path(__file__).parent.parent / "assets" / "style_principale.qss"
-        if PATH_QSS.exists():
-            with open(PATH_QSS, "r", encoding="utf-8") as f:
-                self.setStyleSheet(f.read())
-        else:
-            print("fail load style")
 
         self._crea_toolbar()
 
@@ -105,6 +98,34 @@ class FinestraPrincipale(QMainWindow):
 
         menu_impostazioni = self.menuBar().addMenu(t("menu.sett"))
         menu_impostazioni.addAction(t("sett.edit"), lambda: self._apri_impostazioni())
+
+        menu_import_export = self.menuBar().addMenu(t("menu.import_export"))
+
+        # Importa
+        menu_import = menu_import_export.addMenu(t("menu.import"))
+
+        menu_import.addAction(t("import.locations"), self._importa_locations)
+
+        menu_import.addAction(t("import.categories"), self._importa_categorie)
+
+        menu_import.addAction(t("import.objects"), self._importa_oggetti)
+
+        menu_import.addAction(t("import.settings"),self._importa_impostazioni)
+
+
+        # Esporta
+        menu_export = menu_import_export.addMenu(t("menu.export"))
+
+        menu_export.addAction(t("export.locations"), self._esporta_locations)
+
+        menu_export.addAction(t("export.categories"), self._esporta_categorie)
+
+        menu_export.addAction(t("export.objects"), self._esporta_oggetti)
+
+        menu_export.addAction(t("export.movements"), self._esporta_movimenti)
+
+        menu_export.addAction(t("export.settings"), self._esporta_impostazioni)
+
 
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
@@ -1175,4 +1196,149 @@ class FinestraPrincipale(QMainWindow):
                 and self.config["cartella_backup"]
             ):
                 self._avvia_timer_backup()
+
+    #iimppoortazioooone
+
+    def _importa_locations(self):
+        percorso, _ = QFileDialog.getOpenFileName(
+            self,
+            t("import.locations"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        risultato = csv_io.importa_locations_csv(percorso)
+
+        self._mostra_risultato_import(
+            t("import.locations"),
+            risultato
+        )
+
+    def _importa_categorie(self):
+        percorso, _ = QFileDialog.getOpenFileName(
+            self,
+            t("import.categories"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        risultato = csv_io.importa_categorie_csv(percorso)
+
+        self._mostra_risultato_import(
+            t("import.categories"),
+            risultato
+        )
+
+    def _importa_oggetti(self):
+        percorso, _ = QFileDialog.getOpenFileName(
+            self,
+            t("import.objects"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        risultato = csv_io.importa_oggetti_csv(percorso)
+
+        self._mostra_risultato_import(
+            t("import.objects"),
+            risultato
+        )
+
+    #esportazioneeee
+
+    def _esporta_locations(self):
+        percorso, _ = QFileDialog.getSaveFileName(
+            self,
+            t("export.locations"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        csv_io.esporta_locations_csv(percorso)
+
+    def _esporta_categorie(self):
+        percorso, _ = QFileDialog.getSaveFileName(
+            self,
+            t("export.categories"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        csv_io.esporta_categorie_csv(percorso)
+
+    def _esporta_oggetti(self):
+        percorso, _ = QFileDialog.getSaveFileName(
+            self,
+            t("export.objects"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        csv_io.esporta_oggetti_csv(percorso)
+
+    def _esporta_movimenti(self):
+        percorso, _ = QFileDialog.getSaveFileName(
+            self,
+            t("export.movements"),
+            "",
+            "CSV (*.csv)"
+        )
+
+        if not percorso:
+            return
+
+        csv_io.esporta_movimenti_csv(percorso)
+
+    #impostazioni import e export
+
+    def _esporta_impostazioni(self):
+        percorso, _ = QFileDialog.getSaveFileName(
+            self,
+            t("export.settings"),
+            "",
+            "JSON (*.json)"
+        )
+
+        if not percorso:
+            return
+
+        impostazioni.esporta_config(percorso)
+
+    def _importa_impostazioni(self):
+        percorso, _ = QFileDialog.getOpenFileName(
+            self,
+            t("import.settings"),
+            "",
+            "JSON (*.json)"
+        )
+
+        if not percorso:
+            return
+
+        self.config = impostazioni.importa_config(percorso)
+        impostazioni.salva(self.config)
+
+        QMessageBox.information(
+            self,
+            t("import.settings"),
+            t("import.settings_restart")
+        )
             

@@ -36,7 +36,10 @@
         "stat": "Statistiques",
         "inventory": "Inventaire",
         "go_to": "Aller à",
-        "sett": "Paramètres"
+        "sett": "Paramètres",
+        "import_export": "Importer / Exporter",
+        "import": "Importer",
+        "export": "Exporter"
     },
     "locations": {
         "title": "Emplacement",
@@ -199,6 +202,22 @@
         "dark": "Sombre",
         "light": "Clair",
         "qr": "CODE QR",
-        "barcode": "CODE-BARRES"
+        "barcode": "CODE-BARRES",
+        "restart": "Les paramètres modifiés prendront effet après le redémarrage de l'application."
+    },
+
+    "import": {
+        "locations": "Importer les emplacements",
+        "categories": "Importer les catégories",
+        "objects": "Importer les objets",
+        "settings": "Importer les paramètres"
+    },
+
+    "export": {
+        "locations": "Exporter les emplacements",
+        "categories": "Exporter les catégories",
+        "objects": "Exporter les objets",
+        "movements": "Exporter les mouvements",
+        "settings": "Exporter les paramètres"
     }
 }
