@@ -19,6 +19,7 @@ from app.gui.finestra_impostazioni import FinestraImpostazioni
 from app.localization import t
 from app.config import impostazioni
 from app.data_io import csv_io
+from app.risorse import percorso_risorsa
 
 class FinestraPrincipale(QMainWindow):
     def __init__(self):
@@ -316,7 +317,7 @@ class FinestraPrincipale(QMainWindow):
 
 
         label_imm = QLabel()
-        pixmap_logo = QPixmap("app/assets/stocktopus-logo.png").scaled(
+        pixmap_logo = QPixmap(percorso_risorsa("app/assets/stocktopus-logo.png")).scaled(
             300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
         label_imm.setPixmap(pixmap_logo)

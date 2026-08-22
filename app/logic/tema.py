@@ -1,7 +1,8 @@
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
+from app.risorse import percorso_risorsa
 
-CARTELLA_ASSETS = Path(__file__).parent.parent / "assets"
+CARTELLA_ASSETS = percorso_risorsa("app/assets")
 
 def applica_tema(nome_tema: str):
     file_qss = CARTELLA_ASSETS / ("style_principale.qss" if nome_tema == "scuro" else "style_principale.qss")#substitute whit light_theme.sql in future.

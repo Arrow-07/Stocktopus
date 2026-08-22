@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-
-LANGUAGES_DIR = Path(__file__).parent/ "languages"
+from app.risorse import percorso_risorsa
+LANGUAGES_DIR = percorso_risorsa("app/localization/languages")
 
 _lingua_corrente  = "en"
 _traduzioni = {}

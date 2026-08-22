@@ -4,8 +4,9 @@ from app.config import impostazioni
 from app.localization import t, lingua_corrente
 from pathlib import Path
 from app.logic.tema import applica_tema
+from app.risorse import percorso_risorsa
 
-LINGUE = Path(__file__).parent.parent / "localization" / "languages"
+LINGUE = percorso_risorsa("app/localization/languages")
 
 class FinestraImpostazioni(QDialog):
     def __init__(self, parent=None):
