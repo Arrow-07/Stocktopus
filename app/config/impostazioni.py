@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
+import os
 
-FILE_CONFIG = Path(__file__).parent.parent.parent / "data" / "config.json"
+FILE_CONFIG = Path(os.getenv("APPDATA")) / "Stocktopus" / "config.json"
+
 
 DEFAULT = {
     "tema": "dark",

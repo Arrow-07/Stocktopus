@@ -2,8 +2,9 @@ import qrcode
 import barcode
 from pathlib import Path
 from barcode.writer import ImageWriter
+import os
 
-CARTELLA_CODICI = Path(__file__).parent.parent.parent/"data"/"codici"
+CARTELLA_CODICI = Path(os.getenv("APPDATA")) / "Stocktopus" / "codici"
 
 def crea_qr_code(testo: str) -> str :
     """

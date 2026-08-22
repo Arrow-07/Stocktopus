@@ -9,4 +9,10 @@ def applica_tema(nome_tema: str):
     if not file_qss.exists():
         return
     with open(file_qss, "r", encoding="utf-8") as f:
-        QApplication.instance().setStyleSheet(f.read())
+        qss = f.read()
+
+    qss = qss.replace(
+        "url(app/assets/",
+        f"url({CARTELLA_ASSETS.as_posix()}/"
+    )
+    QApplication.instance().setStyleSheet(qss)

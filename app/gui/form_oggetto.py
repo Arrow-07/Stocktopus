@@ -1,8 +1,10 @@
 import shutil
 import uuid
 from pathlib import Path
+import os
 
-CARTELLA_IMMAGINI = Path(__file__).parent.parent.parent / "data" / "immagini"
+CARTELLA_IMMAGINI = Path(os.getenv("APPDATA")) / "Stocktopus" / "immagini"
+
 
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QComboBox, QSpinBox, QTextEdit, QPushButton, QHBoxLayout, QMessageBox, QFileDialog

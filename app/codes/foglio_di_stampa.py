@@ -2,8 +2,9 @@ import math
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
+import os
 
-CARTELLA_FOGLI = Path(__file__).parent.parent.parent / "data" / "printable_sheets"
+CARTELLA_FOGLI = Path(os.getenv("APPDATA")) / "Stocktopus" / "printable_sheets"
 
 DPI = 300
 LARGHEZZA_A4 = int(8.27 * DPI)   # ~2481 px
