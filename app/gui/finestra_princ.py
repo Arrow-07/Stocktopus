@@ -3,9 +3,10 @@ QMainWindow, QWidget, QSplitter, QTreeView, QTableView, QVBoxLayout, QHBoxLayout
 )
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from pathlib import Path
 from app.db import location_repo, oggetto_repo, movimenti_repo, categoria_repo, codice_repo
+from app.db.backup import crea_backup
 from app.db.location_repo import LocationHasChildrenError, LocationHasItemsError
 from app.gui.form_location import FormLocation
 from app.gui.form_oggetto import FormOggetto
@@ -14,7 +15,9 @@ from app.gui.barra_ricerca import BarraRicerca
 from app.codes import servizio_codici, foglio_di_stampa
 from app.gui.finestra_dashboard import FinestraDashboard
 from app.gui.finestra_categorie import FinestraCategorie
+from app.gui.finestra_impostazioni import FinestraImpostazioni
 from app.localization import t
+from app.config import impostazioni
 
 
 class FinestraPrincipale(QMainWindow):
@@ -23,6 +26,17 @@ class FinestraPrincipale(QMainWindow):
         self.setWindowTitle(t("app.name"))
         self.resize(1280,800)
         self.showMaximized()
+
+        self.config = impostazioni.carica()
+
+        self.timer_backup = None
+
+        if (
+            self.config["backup_automatico"]
+            and self.config["backup_frequenza"] == "interval"
+            and self.config["cartella_backup"]
+        ):
+            self._avvia_timer_backup()
 
         PATH_QSS = Path(__file__).parent.parent / "assets" / "style_principale.qss"
         if PATH_QSS.exists():
@@ -83,10 +97,14 @@ class FinestraPrincipale(QMainWindow):
         
         menu_vai = self.menuBar().addMenu(t("menu.go_to"))
         menu_vai.addAction("⚠ " + t("item.missing"), self._mostra_esauriti)
-
+        
         menu_report = self.menuBar().addMenu(t("codes.title"))
         menu_report.addAction(t("codes.print_loc"), self._apri_stampa_location)
         menu_report.addAction(t("codes.print_cat"), self._apri_stampa_categoria)
+
+
+        menu_impostazioni = self.menuBar().addMenu(t("menu.sett"))
+        menu_impostazioni.addAction(t("sett.edit"), lambda: self._apri_impostazioni())
 
     def _apri_form_nuova_location(self):
         id_genitore = self._id_location_albero_selezionata()
@@ -860,8 +878,7 @@ class FinestraPrincipale(QMainWindow):
     def _genera_codice_location(self, id_location: int):
         try:
             servizio_codici.genera_codice_location(
-                id_location,
-                tipo_codice="qr"
+                id_location
             )
 
         except Exception as errore:
@@ -887,7 +904,6 @@ class FinestraPrincipale(QMainWindow):
         try:
             servizio_codici.rigenera_codice_location(
                 id_location,
-                tipo_codice="qr",
                 conferma=True
             )
 
@@ -902,8 +918,7 @@ class FinestraPrincipale(QMainWindow):
     def _stampa_codice_location(self, id_location: int):
         try:
             riga = servizio_codici.ottieni_o_genera_codice_location(
-                id_location,
-                tipo_codice="qr"
+                id_location
             )
 
             self._stampa_codici([riga])
@@ -917,7 +932,6 @@ class FinestraPrincipale(QMainWindow):
     
     def _on_genera_codice_cliccato(self):
         esiste = codice_repo.leggi_codice_oggetto(self.id_oggetto_selezionato) is not None
-        tipo = "qr"
 
         if esiste:
             risposta = QMessageBox.question(
@@ -933,7 +947,7 @@ class FinestraPrincipale(QMainWindow):
             if esiste:
                 servizio_codici.rigenera_codice_oggetto(self.id_oggetto_selezionato, conferma=True)
             else:
-                servizio_codici.genera_codice_oggetto(self.id_oggetto_selezionato, tipo)
+                servizio_codici.genera_codice_oggetto(self.id_oggetto_selezionato)
         except Exception as errore:
             QMessageBox.critical(self, t("common.error"), str(errore))
             return
@@ -1094,3 +1108,71 @@ class FinestraPrincipale(QMainWindow):
     def _apri_dashboard(self):
         self.finestra_dashboard = FinestraDashboard(self)
         self.finestra_dashboard.show()
+
+    def _avvia_timer_backup(self):
+        if self.timer_backup is not None:
+            self.timer_backup.stop()
+
+        self.timer_backup = QTimer(self)
+        self.timer_backup.timeout.connect(self._esegui_backup)
+        self.timer_backup.start(
+            self.config["backup_intervallo"] * 60 * 1000
+        )
+
+    def _esegui_backup(self):
+        if not self.config["backup_automatico"]:
+            return
+
+        cartella = self.config.get("cartella_backup")
+
+        if not cartella:
+            return
+
+        try: 
+            crea_backup(
+                cartella,
+                self.config.get("backup_massimo", 20)
+            )
+        except Exception as errore:
+            QMessageBox.critical(
+                self,
+                t("common.error"),
+                f"{t('sett.backup_failed')}\n{errore}"
+            )
+
+    def closeEvent(self, event):
+        if (
+            self.config.get("backup_automatico")
+            and self.config.get("backup_frequenza") == "close"
+            and self.config.get("cartella_backup")
+        ):
+            try:
+                crea_backup(
+                    self.config["cartella_backup"],
+                    self.config.get("backup_massimo", 20)
+                )
+            except Exception as errore:
+                QMessageBox.critical(
+                self,
+                t("common.error"),
+                f"{t('sett.backup_failed')}\n{errore}"
+                )
+
+        event.accept()
+
+    def _apri_impostazioni(self):
+        if FinestraImpostazioni(self).exec():
+            self.config = impostazioni.carica()
+
+            if self.timer_backup is not None:
+                self.timer_backup.stop()
+                self.timer_backup.deleteLater()
+                self.timer_backup = None
+
+            if (
+                 self.config["backup_automatico"]
+                and self.config["backup_frequenza"] == "interval"
+                and self.config["cartella_backup"]
+            ):
+                self._avvia_timer_backup()
+            

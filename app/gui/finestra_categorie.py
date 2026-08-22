@@ -10,7 +10,7 @@ from app.localization import t
 class FinestraCategorie(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(t("categries.manage"))
+        self.setWindowTitle(t("categories.manage"))
         self.resize(380, 480)
         layout = QVBoxLayout(self)
 

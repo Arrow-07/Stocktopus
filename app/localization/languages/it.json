@@ -38,7 +38,8 @@
         "settings": "Impostazioni",
         "stat": "Statistiche",
         "inventory": "Inventario",
-        "go_to": "Vai a"
+        "go_to": "Vai a",
+        "sett": "Impostazioni"
     },
 
     "locations": {
@@ -188,5 +189,25 @@
         "insights2": " è la categoria più numerosa.",
         "insights3": " contiene il ",
         "insights3_end": " dell'inventario."
+    },
+
+    "sett": {
+        "title": "Impostazioni",
+        "theme": "Tema:",
+        "edit": "Modifica Impostazione",
+        "def_code": "Tipo di codice predefinito:",
+        "auto_code": "Genera automaticamente i codice alla creazione degli oggetti",
+        "backup_folder": "Cartella di Backup:",
+        "select_folder": "Seleziona Cartella di Backup",
+        "backup_enabled": "Abilita backup automatico",
+        "backup_close": "Alla chiusura",
+        "backup_interval": "A intervalli",
+        "backup_frequency": "Frequenza backup",
+        "backup_keep": "Backup da conservare",
+        "backup_failed": "Backup automatico non riuscito.",
+        "dark": "Scuro",
+        "light": "Chiaro",
+        "qr": "CODICE QR",
+        "barcode": "CODICE A BARRE"
     }
 }

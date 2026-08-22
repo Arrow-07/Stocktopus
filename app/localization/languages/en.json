@@ -38,7 +38,8 @@
         "settings": "Settings",
         "stat": "Statistics",
         "inventory": "Inventory",
-        "go_to": "Go to"
+        "go_to": "Go to",
+        "sett": "Settings"
 
     },
 
@@ -192,5 +193,25 @@
         "insights2": " is the largest category.",
         "insights3": "contains",
         "insights3_end": "of the inventory."
+    },
+
+    "sett": {
+        "title": "Settings",
+        "theme": "Theme:",
+        "edit": "Edit setting",
+        "def_code": "Default code type:",
+        "auto_code": "Generate code automatically on item creation",
+        "backup_folder": "Backup folder:",
+        "select_folder": "Select backup folder",
+        "backup_enabled": "Enable automatic backup",
+        "backup_close": "On application close",
+        "backup_interval": "At intervals",
+        "backup_frequency": "Backup frequency",
+        "backup_keep": "Backups to keep",
+        "backup_failed": "Automatic backup failed.",
+        "dark": "Dark",
+        "light": "Light",
+        "qr": "QR CODE",
+        "barcode": "BARCODE"
     }
 }

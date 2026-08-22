@@ -4,11 +4,15 @@ from pathlib import Path
 FILE_CONFIG = Path(__file__).parent.parent.parent / "data" / "config.json"
 
 DEFAULT = {
-    "tema": "scuro",
+    "tema": "dark",
     "tipo_codice_default": "qr",
     "genera_codice_automatico": True,
     "cartella_backup": None,
     "lingua": "en",
+    "backup_automatico": True,
+    "backup_frequenza": "close",
+    "backup_intervallo": 60,
+    "backup_massimo": 20,
 }
 
 def carica() -> dict: 

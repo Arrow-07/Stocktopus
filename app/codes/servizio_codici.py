@@ -1,6 +1,7 @@
 from pathlib import Path
 from app.codes.generate_codes import crea_bar_code as genera_barcode, crea_qr_code as genera_qr
 from app.db import codice_repo, oggetto_repo, location_repo
+from app.config import impostazioni
 
 def ottieni_immagine_codice(riga_codice: dict) -> Path:
     percorso = Path(riga_codice["immagine_path"])
@@ -55,7 +56,7 @@ def elimina_codice_location(id_location: int) -> bool:
     return True
 
 
-def genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
+def genera_codice_oggetto(id_oggetto: int, tipo_codice: str | None = None) -> dict:
     """Genera e salva un nuovo codice per un oggetto.
 
     Args:
@@ -68,6 +69,9 @@ def genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
     Raises:
         Exception: Se l'oggetto non esiste oppure se per quell'oggetto esiste già un codice.
     """
+    if tipo_codice is None:
+        tipo_codice = impostazioni.carica().get("tipo_codice_default", "qr")
+
     if codice_repo.leggi_codice_oggetto(id_oggetto) is not None:
         raise Exception(
             "This item already has a code. Use rigenera_codice_oggetto() if you want to replace it."
@@ -83,7 +87,7 @@ def genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
     return {"id": id_codice, "tipo_codice": tipo_codice, "codice": testo, "immagine_path": str(percorso)}
 
 
-def genera_codice_location(id_location: int, tipo_codice: str = "qr") -> dict:
+def genera_codice_location(id_location: int, tipo_codice: str | None = None) -> dict:
     """Genera e salva un nuovo codice per una location.
 
     Args:
@@ -96,6 +100,9 @@ def genera_codice_location(id_location: int, tipo_codice: str = "qr") -> dict:
     Raises:
         Exception: Se la location non esiste oppure se per quella location esiste già un codice.
     """
+    if tipo_codice is None:
+        tipo_codice = impostazioni.carica().get("tipo_codice_default", "qr")
+
     if codice_repo.leggi_codice_location(id_location) is not None:
         raise Exception(
             "This location already has a code. Use rigenera_codice_location() if you want to replace it."
@@ -111,7 +118,7 @@ def genera_codice_location(id_location: int, tipo_codice: str = "qr") -> dict:
     return {"id": id_codice, "tipo_codice": tipo_codice, "codice": testo, "immagine_path": str(percorso)}
 
 
-def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr", conferma: bool = False) -> dict:
+def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str | None = None, conferma: bool = False) -> dict:
     """Rigenera il codice associato a un oggetto, sostituendo il precedente.
 
     Args:
@@ -125,6 +132,9 @@ def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr", conferma: 
     Raises:
         Exception: Se la conferma non è stata esplicitamente impostata a True oppure se l'oggetto non esiste.
     """
+    if tipo_codice is None:
+        tipo_codice = impostazioni.carica().get("tipo_codice_default", "qr")
+    
     if not conferma:
         raise Exception(
             "Destructive operation: the current code and its image will be permanently deleted."
@@ -149,7 +159,7 @@ def rigenera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr", conferma: 
     return {"id": id_codice, "tipo_codice": tipo_codice, "codice": testo, "immagine_path": str(percorso)}
 
 
-def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma: bool = False) -> dict:
+def rigenera_codice_location(id_location: int, tipo_codice: str | None = None, conferma: bool = False) -> dict:
     """Rigenera il codice associato a una location, sostituendo il precedente.
 
     Args:
@@ -163,6 +173,10 @@ def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma
     Raises:
         Exception: Se la conferma non è stata esplicitamente impostata a True oppure se la location non esiste.
     """
+    if tipo_codice is None:
+        tipo_codice = impostazioni.carica().get("tipo_codice_default", "qr")
+    
+
     if not conferma:
         raise Exception(
             "Destructive operation: the current code and its image will be permanently deleted."
@@ -186,11 +200,11 @@ def rigenera_codice_location(id_location: int, tipo_codice: str = "qr", conferma
     return {"id": id_codice, "tipo_codice": tipo_codice, "codice": testo, "immagine_path": str(percorso)}
 
 
-def ottieni_o_genera_codice_oggetto(id_oggetto: int, tipo_codice: str = "qr") -> dict:
+def ottieni_o_genera_codice_oggetto(id_oggetto: int, tipo_codice: str | None = None) -> dict:
     riga = codice_repo.leggi_codice_oggetto(id_oggetto)
     return riga if riga else genera_codice_oggetto(id_oggetto, tipo_codice)
 
 
-def ottieni_o_genera_codice_location(id_location: int, tipo_codice: str = "qr") -> dict:
+def ottieni_o_genera_codice_location(id_location: int, tipo_codice: str | None = None) -> dict:
     riga = codice_repo.leggi_codice_location(id_location)
     return riga if riga else genera_codice_location(id_location, tipo_codice)

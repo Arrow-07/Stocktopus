@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (
 from app.db import oggetto_repo, categoria_repo, location_repo
 from app.logic import suggerimenti
 from app.localization import t
-
+from app.config import impostazioni
+from app.codes import servizio_codici
 
 class FormOggetto(QDialog):
     """
@@ -191,7 +192,7 @@ class FormOggetto(QDialog):
                     immagine_path=self.campo_immagine_path.text().strip() or None,
                 )
             else:
-                oggetto_repo.crea_oggetto(
+                nuovo_id = oggetto_repo.crea_oggetto(
                     nome=nome,
                     quantita=self.campo_quantita.value(),
                     unita_di_misura=self.campo_unita_misura.text().strip() or "pz",
@@ -203,6 +204,12 @@ class FormOggetto(QDialog):
                     immagine_path=self.campo_immagine_path.text().strip() or None,
                     dettagli=self.campo_dettagli.text().strip() or None,
                 )
+                config = impostazioni.carica()
+                if config.get("genera_codice_automatico"):
+                    try:
+                        servizio_codici.genera_codice_oggetto(nuovo_id, config.get("tipo_codice_default", "qr"))
+                    except Exception as errore:
+                        QMessageBox.critical(self, t("common.error"), str(errore))
         except Exception as errore:
             QMessageBox.critical(self, t("errors.error_while_saving"), str(errore))
             return
