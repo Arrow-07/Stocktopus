@@ -22,7 +22,7 @@ Stocktopus is an open-source desktop application designed to make inventory mana
 
 It allows users to organize items into hierarchical locations, categorize them, keep track of movements, and maintain a structured database of their inventory.
 
-Built with Python and Qt, Stocktopus is designed to be lightweight, fast and fully offline while remaining scalable for inventories of any size.
+Built with Python and Qt, Stocktopus is designed to be fast and fully offline while remaining scalable for inventories of any size.
 
 ---
 
@@ -30,30 +30,17 @@ Built with Python and Qt, Stocktopus is designed to be lightweight, fast and ful
 
 Many inventory management solutions are either too complex, cloud-dependent or filled with features that most users never need.
 
-Stocktopus was created to provide a clean, intuitive and fully offline alternative that helps individuals, makers, schools and small businesses keep track of their equipment without unnecessary complexity.
-
 ---
 
 ## Features
 
-- 📦 *Inventory management*
 - 📂 *Hierarchical locations*
 - 🏷️ *Custom categories*
-- 🔎 *Fast search*
+- 🔎 *Search*
 - 🖼️ *Image support*
 - 🔢 *Barcode & QR Code support*
-- 📜 *Movement history*
-- 👥 *User management*
 - 💾 *SQLite database*
-- 🖥️ *Modern desktop interface*
-
----
-
-## Technology Stack
-
-- 🐍 Python
-- 🖥️ PySide6 (Qt)
-- 🗄️ SQLite
+- 🖥️ *Gui interface*
 
 ---
 
@@ -68,13 +55,13 @@ Current database entities include:
 - 🏷️ Categories
 - 🔢 Item Codes
 - 📜 Movement History
-- 👤 Users
+- 👤 Users (not setup yet)
 
 ---
 
 ## Roadmap
 
-Current progress: **Phase 6 - Settings, backups, packaging** 🚧
+Current progress: **FINISH VERSION 1.00 MORE UPDATE IN FUTURE** ✅
 
 | Status | Phase | Description |
 |:------:|-------|-------------|
@@ -84,7 +71,7 @@ Current progress: **Phase 6 - Settings, backups, packaging** 🚧
 | ✅ | **Phase 3** | Desktop graphical interface, item management and search. |
 | ✅ | **Phase 4** | Dashboard, statistics and movement history. |
 | ✅ | **Phase 5** | Smart location suggestions based on inventory data. |
-| 🚧 | **Phase 6** | Settings, backups, packaging and application release. |
+| ✅ | **Phase 6** | Settings, backups, packaging and application release. |
 
 
 ---
@@ -93,6 +80,13 @@ Current progress: **Phase 6 - Settings, backups, packaging** 🚧
 This project is licensed under the **MIT License**.
 
 See the [LICENSE](LICENSE) file for more information.
+
+---
+##Install STOCKTOPUS:
+
+To install stocktopus please download the setup exe created by me:
+it is a very easy and fast process
+[SET_UP_STOCKTOPUS](app)
 
 ---
 
