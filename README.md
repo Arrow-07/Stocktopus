@@ -42,6 +42,10 @@ Many inventory management solutions are either too complex, cloud-dependent or f
 - 🔢 *Barcode & QR Code support*
 - 💾 *SQLite database*
 - 🖥️ *Gui interface*
+- 🌍 *Multi languages support*
+- 📊 *Stat and info dashboard*
+- 🔄️ *Automatic and periodic backup*
+- 🧰 *Import and export via csv*
 
 ---
 
@@ -56,7 +60,7 @@ Current database entities include:
 - 🏷️ Categories
 - 🔢 Item Codes
 - 📜 Movement History
-- 👤 Users (not setup yet)
+- 👤 Users (not implemented yet)
 
 ---
 
