@@ -119,7 +119,7 @@ If you prefer:
 An online demo is available at the link: [online_demo](https://mybinder.org/v2/gh/Arrow-07/StocktopusOnlineDemo/HEAD?urlpath=%2Fdesktop)
 
 
-**WARNING** : it is not graphically optimized but all functions work.
+**WARNING** : this demo is not graphically optimized but all functions work.
 
 ---
 
