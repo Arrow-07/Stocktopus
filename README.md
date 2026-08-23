@@ -10,10 +10,11 @@ A modern, open-source desktop inventory management application.
 ![Status](https://img.shields.io/badge/Status-In%20Development-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+
 </p>
 
 > [!WARNING]
-> This project is actively developed and not yet considered production-ready.
+> This project is actively developed and not yet considered production-ready. **Now released version 1.0**
 
 ---
 ## About
@@ -88,13 +89,33 @@ To install stocktopus please download the setup exe created by me,
 it is a very easy and fast process:
 
 
-[SET_UP_FILE](https://www.mediafire.com/file/t4emqpzhf3a8dyg/Stocktopus_Setup_1.0.exe/file)
+[Download Stocktopus Setup](https://www.mediafire.com/file/t4emqpzhf3a8dyg/Stocktopus_Setup_1.0.exe/file)
+
+
+If you prefer:
+- clone this repository on your PC
+- install all the required libraries in requirements.txt.
+  ~~~
+  pip install -r requirements.txt
+  ~~~ 
+- run the script.
+  ~~~
+  python main.py
+  ~~~ 
 
 ---
 ##Image preview:
 
 <img width="1919" height="856" alt="image" src="https://github.com/user-attachments/assets/9fc47422-8fc0-4fe0-8dde-035ae3b1bc24" />
 
+---
+
+## Demo Online
+
+An online demo is available at the link: [online_demo](https://mybinder.org/v2/gh/Arrow-07/StocktopusOnlineDemo/HEAD?urlpath=%2Fdesktop)
+
+
+**WARNING** : it is not graphically optimized but all functions work.
 
 ---
 
