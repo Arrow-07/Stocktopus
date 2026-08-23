@@ -9,7 +9,7 @@ A modern, open-source desktop inventory management application.
 ![Python](https://img.shields.io/badge/Python-3.11.9-blue)
 ![Status](https://img.shields.io/badge/Status-In%20Development-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
-
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Arrow-07/StocktopusOnlineDemo/HEAD?urlpath=%2Fdesktop)
 
 </p>
 
