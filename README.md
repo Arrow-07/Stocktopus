@@ -82,11 +82,19 @@ This project is licensed under the **MIT License**.
 See the [LICENSE](LICENSE) file for more information.
 
 ---
-##Install STOCKTOPUS:
+## Install STOCKTOPUS:
 
-To install stocktopus please download the setup exe created by me:
-it is a very easy and fast process
-[SET_UP_STOCKTOPUS](app)
+To install stocktopus please download the setup exe created by me,
+it is a very easy and fast process:
+
+
+[SET_UP_FILE](https://www.mediafire.com/file/t4emqpzhf3a8dyg/Stocktopus_Setup_1.0.exe/file)
+
+---
+##Image preview:
+
+<img width="1919" height="856" alt="image" src="https://github.com/user-attachments/assets/9fc47422-8fc0-4fe0-8dde-035ae3b1bc24" />
+
 
 ---
 
