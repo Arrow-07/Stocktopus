@@ -108,7 +108,7 @@ If you prefer:
   ~~~ 
 
 ---
-##Image preview:
+## Image preview:
 
 <img width="1919" height="856" alt="image" src="https://github.com/user-attachments/assets/9fc47422-8fc0-4fe0-8dde-035ae3b1bc24" />
 
